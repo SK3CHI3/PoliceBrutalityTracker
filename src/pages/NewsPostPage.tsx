@@ -2,10 +2,9 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, User, Tag, Share2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { useNewsArticleBySlug, useAllPublishedNews } from '@/hooks/useNewsArticle';
 import SEOHead from '@/components/SEOHead';
-import MarkdownRenderer from '@/components/MarkdownRenderer';
+import ArticleRenderer from '@/components/ArticleRenderer';
 
 const NewsPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -23,7 +22,7 @@ const NewsPostPage = () => {
   };
 
   const estimateReadTime = (content?: string) => {
-    if (!content) return '1 min';
+    if (!content) return '1 min read';
     const words = content.split(/\s+/).length;
     const minutes = Math.ceil(words / 200);
     return `${minutes} min read`;
@@ -35,13 +34,26 @@ const NewsPostPage = () => {
       try {
         await navigator.share({
           title: article?.title,
-          text: article?.excerpt || article?.seo_description,
+          text: article?.excerpt,
           url,
         });
       } catch {}
     } else {
       navigator.clipboard.writeText(url);
     }
+  };
+
+  const getCategoryColor = (category?: string) => {
+    const colors: Record<string, string> = {
+      'Research & Analysis': 'bg-blue-600/20 text-blue-300 border-blue-500/30',
+      'Legal Guide': 'bg-green-600/20 text-green-300 border-green-500/30',
+      'Protest Coverage': 'bg-orange-600/20 text-orange-300 border-orange-500/30',
+      'Community Action': 'bg-purple-600/20 text-purple-300 border-purple-500/30',
+      'Policy & Reform': 'bg-yellow-600/20 text-yellow-300 border-yellow-500/30',
+      'Health & Justice': 'bg-pink-600/20 text-pink-300 border-pink-500/30',
+      'Gender & Justice': 'bg-indigo-600/20 text-indigo-300 border-indigo-500/30',
+    };
+    return colors[category || ''] || 'bg-gray-600/20 text-gray-300 border-gray-500/30';
   };
 
   // Related articles (same category, excluding current)
@@ -75,11 +87,10 @@ const NewsPostPage = () => {
   const articleStructuredData = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
-    "headline": article.seo_title || article.title,
-    "description": article.seo_description || article.excerpt || article.content?.substring(0, 160),
-    "image": article.featured_image_url || "https://policebrutalitytracker.co.ke/og-image.svg",
+    "headline": article.title,
+    "description": article.excerpt || article.content?.substring(0, 160),
     "author": {
-      "@type": "Person",
+      "@type": "Organization",
       "name": article.author
     },
     "publisher": {
@@ -116,18 +127,17 @@ const NewsPostPage = () => {
   return (
     <>
       <SEOHead
-        title={`${article.seo_title || article.title} | PoliceBrutalityTracker`}
-        description={article.seo_description || article.excerpt || article.content?.substring(0, 155) + '...'}
+        title={`${article.title} | PoliceBrutalityTracker`}
+        description={article.excerpt || article.content?.substring(0, 155) + '...'}
         keywords={article.tags?.join(', ') || `${article.category}, police brutality Kenya, human rights`}
         url={`https://policebrutalitytracker.co.ke/news/${slug}`}
-        image={article.featured_image_url || undefined}
         type="article"
         structuredData={[articleStructuredData, breadcrumbData]}
       />
 
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-950 to-slate-900 text-white">
         {/* Header Bar */}
-        <div className="bg-black/30 backdrop-blur-xl border-b border-white/10">
+        <div className="bg-black/30 backdrop-blur-xl border-b border-white/10 sticky top-0 z-40">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
             <Button
               variant="ghost"
@@ -149,23 +159,12 @@ const NewsPostPage = () => {
         </div>
 
         {/* Article Content */}
-        <article className="max-w-4xl mx-auto px-4 py-8">
-          {/* Featured Image */}
-          {article.featured_image_url && (
-            <div className="mb-8 rounded-2xl overflow-hidden">
-              <img
-                src={article.featured_image_url}
-                alt={article.title}
-                className="w-full h-64 md:h-96 object-cover"
-              />
-            </div>
-          )}
-
+        <article className="max-w-4xl mx-auto px-4 py-12">
           {/* Article Header */}
-          <header className="mb-8">
-            <div className="flex flex-wrap gap-2 mb-4">
+          <header className="mb-12">
+            <div className="flex flex-wrap gap-2 mb-6">
               {article.category && (
-                <Badge className="bg-red-600/20 text-red-300 border-red-500/30">
+                <Badge className={getCategoryColor(article.category)}>
                   {article.category}
                 </Badge>
               )}
@@ -175,43 +174,36 @@ const NewsPostPage = () => {
                 </Badge>
               )}
             </div>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight text-white">
               {article.title}
             </h1>
             {article.excerpt && (
-              <p className="text-xl text-gray-300 mb-6 leading-relaxed">
+              <p className="text-xl text-gray-300 mb-8 leading-relaxed">
                 {article.excerpt}
               </p>
             )}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 pb-6 border-b border-white/10">
-              <span className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-6 text-sm text-gray-400 pb-6 border-b border-white/10">
+              <span className="flex items-center gap-2">
                 <User className="w-4 h-4" />
                 {article.author}
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 {formatDate(article.published_at || article.created_at)}
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 {estimateReadTime(article.content)}
               </span>
             </div>
           </header>
 
-          {/* AI disclosure */}
-          {article.isAiGenerated && (
-            <div className="mb-8 rounded-lg border border-purple-500/30 bg-purple-900/20 px-4 py-3 text-sm text-purple-200">
-              This article was automatically generated by AI from cases documented on this platform.
-            </div>
-          )}
-
-          {/* Article Body */}
-          <MarkdownRenderer content={article.content || ''} />
+          {/* Article Body - Rendered Content */}
+          <ArticleRenderer content={article.content || ''} />
 
           {/* Tags */}
           {article.tags && article.tags.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 mb-8 pt-6 border-t border-white/10">
+            <div className="flex flex-wrap items-center gap-2 mb-12 mt-12 pt-8 border-t border-white/10">
               <Tag className="w-4 h-4 text-gray-400" />
               {article.tags.map((tag, i) => (
                 <Badge key={i} variant="outline" className="border-white/20 text-gray-300">
@@ -222,39 +214,35 @@ const NewsPostPage = () => {
           )}
 
           {/* Author Card */}
-          <Card className="bg-white/5 border-white/10 mb-12">
-            <CardContent className="p-6 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center">
-                <User className="w-6 h-6 text-red-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-white">{article.author}</p>
-                <p className="text-sm text-gray-400">PoliceBrutalityTracker Contributor</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-6 mb-12 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center flex-shrink-0">
+              <User className="w-6 h-6 text-red-400" />
+            </div>
+            <div>
+              <p className="font-semibold text-white">{article.author}</p>
+              <p className="text-sm text-gray-400">PoliceBrutalityTracker</p>
+            </div>
+          </div>
 
           {/* Related Articles */}
           {relatedArticles.length > 0 && (
             <section className="mt-12">
-              <h2 className="text-2xl font-bold mb-6">Related Articles</h2>
+              <h2 className="text-2xl font-bold mb-6 text-white">Related Articles</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {relatedArticles.map((related) => (
                   <Link
                     key={related.id}
-                    to={`/news/${related.slug || related.id}`}
+                    to={`/news/${related.id}`}
                     className="block group"
                   >
-                    <Card className="bg-white/5 border-white/10 hover:bg-white/10 transition-all h-full">
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold text-white group-hover:text-red-400 transition-colors mb-2 line-clamp-2">
-                          {related.title}
-                        </h3>
-                        <p className="text-sm text-gray-400">
-                          {formatDate(related.published_at || related.created_at)}
-                        </p>
-                      </CardContent>
-                    </Card>
+                    <div className="bg-white/5 border border-white/10 hover:bg-white/10 hover:border-red-500/30 transition-all h-full rounded-lg p-4">
+                      <h3 className="font-semibold text-white group-hover:text-red-400 transition-colors mb-2 line-clamp-2">
+                        {related.title}
+                      </h3>
+                      <p className="text-sm text-gray-400">
+                        {formatDate(related.published_at || related.created_at)}
+                      </p>
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -262,8 +250,8 @@ const NewsPostPage = () => {
           )}
 
           {/* CTA */}
-          <div className="text-center mt-12 pt-8 border-t border-white/10">
-            <p className="text-gray-400 mb-4">Explore more from PoliceBrutalityTracker</p>
+          <div className="text-center mt-16 pt-8 border-t border-white/10">
+            <p className="text-gray-400 mb-6">Explore more from PoliceBrutalityTracker</p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button onClick={() => navigate('/news')} variant="outline" className="border-white/20 text-gray-300 hover:bg-white/10">
                 More Articles

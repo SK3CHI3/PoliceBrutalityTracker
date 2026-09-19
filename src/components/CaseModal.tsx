@@ -167,13 +167,13 @@ const CaseModal = ({ case: caseData, onClose }: CaseModalProps) => {
               <div className="flex items-center space-x-2.5 sm:space-x-3 flex-1 min-w-0">
                 <div className="w-9 h-9 sm:w-11 sm:h-11 bg-gradient-to-br from-red-500 to-red-700 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
                   <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            </div>
+                </div>
                 <div className="flex-1 min-w-0 flex items-center gap-2 sm:gap-3 flex-wrap">
                   <div className="min-w-0">
                     <h2 className="text-base sm:text-xl font-bold text-white line-clamp-1">
                       {caseData.victimName}
                     </h2>
-              {caseData.age && (
+                    {caseData.age && (
                       <p className="text-xs text-gray-400">Age {caseData.age}</p>
                     )}
                   </div>
@@ -187,23 +187,23 @@ const CaseModal = ({ case: caseData, onClose }: CaseModalProps) => {
                       <span>{typeConfig.label}</span>
                     </Badge>
                   </div>
-            </div>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onClose}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
                 className="flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full hover:bg-white/10 text-gray-400 hover:text-white"
-          >
+              >
                 <X className="w-4 h-4 sm:w-5 sm:h-5" />
-          </Button>
-        </div>
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Content - Scrollable */}
-        <div 
-          className="flex-1 overflow-y-auto overscroll-contain"
+        <div
+          className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
           style={{
             WebkitOverflowScrolling: 'touch',
             touchAction: 'pan-y',
@@ -427,14 +427,14 @@ const CaseModal = ({ case: caseData, onClose }: CaseModalProps) => {
                         href={link}
                         target="_blank"
                         rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-lg hover:border-pink-500/50 hover:bg-white/10 transition-all group"
+                      className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-lg hover:border-pink-500/50 hover:bg-white/10 transition-all group overflow-hidden"
                     >
-                      <div className="flex items-center space-x-2.5 min-w-0 flex-1">
+                      <div className="flex items-center space-x-2.5 min-w-0 flex-1 overflow-hidden">
                         <div className="w-9 h-9 bg-pink-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                           <Video className="w-4 h-4 sm:w-5 sm:h-5 text-pink-400" />
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-white">Video Evidence {index + 1}</p>
+                        <div className="min-w-0 flex-1 overflow-hidden">
+                          <p className="text-sm font-medium text-white truncate">Video Evidence {index + 1}</p>
                           <p className="text-xs text-gray-400 truncate">{link}</p>
                         </div>
                       </div>
@@ -453,7 +453,18 @@ const CaseModal = ({ case: caseData, onClose }: CaseModalProps) => {
                     <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-400 uppercase tracking-wider">Source</p>
-                      <p className="text-white mt-0.5 break-words">{caseData.source}</p>
+                      {caseData.source.startsWith('http') ? (
+                        <a
+                          href={caseData.source}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 mt-0.5 inline-block break-all hover:underline text-xs sm:text-sm"
+                        >
+                          {caseData.source}
+                        </a>
+                      ) : (
+                        <p className="text-white mt-0.5 break-words">{caseData.source}</p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -582,17 +593,17 @@ const CaseModal = ({ case: caseData, onClose }: CaseModalProps) => {
                 <Button
                   onClick={handleConfirm}
                   disabled={isConfirming}
-                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-cyan-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full max-w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-cyan-500/50 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
                 >
                   {isConfirming ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Confirming...
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 flex-shrink-0" />
+                      <span className="truncate">Confirming...</span>
                     </>
                   ) : (
                     <>
-                      <ThumbsUp className="w-4 h-4 mr-2" />
-                      Confirm This Case
+                      <ThumbsUp className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">Confirm This Case</span>
                     </>
                   )}
                 </Button>

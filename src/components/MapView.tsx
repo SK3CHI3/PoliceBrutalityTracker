@@ -1,309 +1,321 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from 'react-leaflet';
+import React, { useRef, useState } from 'react';
+import Map, { Marker, Popup, NavigationControl, MapRef } from 'react-map-gl/maplibre';
 import { Case } from '@/types';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { LatLngBoundsExpression } from 'leaflet';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useSidebar } from '@/components/ui/sidebar';
-import { Plus, Minus, Maximize2 } from 'lucide-react';
-
-// Fix for default markers in React Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Verified - Small red person/user icon SVG for mobile
-const personRedIconMobile = new L.Icon({
-  iconUrl: 'data:image/svg+xml;utf8,<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="5" r="3" fill="%23EF4444"/><rect x="2" y="9" width="10" height="4" rx="2" fill="%23EF4444"/></svg>',
-  iconSize: [14, 14],
-  iconAnchor: [7, 7],
-  popupAnchor: [0, -7],
-  shadowUrl: undefined,
-  shadowSize: undefined,
-  shadowAnchor: undefined
-});
-
-// Verified - Larger red person/user icon SVG for desktop
-const personRedIconDesktop = new L.Icon({
-  iconUrl: 'data:image/svg+xml;utf8,<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="6" r="4" fill="%23EF4444"/><rect x="3" y="12" width="12" height="5" rx="2.5" fill="%23EF4444"/></svg>',
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-  popupAnchor: [0, -9],
-  shadowUrl: undefined,
-  shadowSize: undefined,
-  shadowAnchor: undefined
-});
-
-// Unverified - Person icon with question mark badge (mobile)
-const personRedIconMobileUnverified = new L.Icon({
-  iconUrl: 'data:image/svg+xml;utf8,<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="6" r="3" fill="%23EF4444"/><rect x="3" y="10" width="10" height="4" rx="2" fill="%23EF4444"/><circle cx="16" cy="4" r="4" fill="%23FFA500" stroke="%23fff" stroke-width="1"/><text x="16" y="6.5" font-size="5" font-weight="bold" text-anchor="middle" fill="%23fff">?</text></svg>',
-  iconSize: [20, 20],
-  iconAnchor: [8, 10],
-  popupAnchor: [0, -10],
-  shadowUrl: undefined,
-  shadowSize: undefined,
-  shadowAnchor: undefined,
-  className: 'unverified-marker'
-});
-
-// Unverified - Person icon with question mark badge (desktop)
-const personRedIconDesktopUnverified = new L.Icon({
-  iconUrl: 'data:image/svg+xml;utf8,<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="7" r="4" fill="%23EF4444"/><rect x="4" y="13" width="12" height="5" rx="2.5" fill="%23EF4444"/><circle cx="20" cy="6" r="6" fill="%23FFA500" stroke="%23fff" stroke-width="1.5"/><text x="20" y="9.5" font-size="8" font-weight="bold" text-anchor="middle" fill="%23fff">?</text></svg>',
-  iconSize: [26, 26],
-  iconAnchor: [10, 13],
-  popupAnchor: [0, -13],
-  shadowUrl: undefined,
-  shadowSize: undefined,
-  shadowAnchor: undefined,
-  className: 'unverified-marker'
-});
 
 interface MapViewProps {
   cases: Case[];
   onCaseHover?: (caseItem: Case, position: { x: number; y: number }) => void;
   onCaseLeave?: () => void;
   onCaseClick?: (caseItem: Case, position: { x: number; y: number }) => void;
-  onCaseSelect?: (caseItem: Case) => void; // Keep for backward compatibility
+  onCaseSelect?: (caseItem: Case) => void;
   onViewDetails?: (caseItem: Case) => void;
 }
 
-// Custom Zoom Control Component
-const ZoomControl = ({ kenyaBounds }: { kenyaBounds: LatLngBoundsExpression }) => {
-  const map = useMap();
-
-  const handleZoomIn = () => {
-    map.zoomIn();
-  };
-
-  const handleZoomOut = () => {
-    map.zoomOut();
-  };
-
-  const handleResetView = () => {
-    map.fitBounds(kenyaBounds, { padding: [50, 50] });
-  };
-
-  return (
-    <div className="fixed bottom-12 right-3 z-[1000] pointer-events-auto">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-300 rounded-lg shadow-xl overflow-hidden">
-        <button
-          onClick={handleZoomIn}
-          className="flex items-center justify-center w-11 h-11 hover:bg-red-50 transition-colors border-b border-gray-200 group"
-          title="Zoom in"
-          aria-label="Zoom in"
-        >
-          <Plus className="w-5 h-5 text-gray-700 group-hover:text-red-600" />
-        </button>
-        <button
-          onClick={handleZoomOut}
-          className="flex items-center justify-center w-11 h-11 hover:bg-red-50 transition-colors border-b border-gray-200 group"
-          title="Zoom out"
-          aria-label="Zoom out"
-        >
-          <Minus className="w-5 h-5 text-gray-700 group-hover:text-red-600" />
-        </button>
-        <button
-          onClick={handleResetView}
-          className="flex items-center justify-center w-11 h-11 hover:bg-red-50 transition-colors group"
-          title="Reset view to Kenya"
-          aria-label="Reset view"
-        >
-          <Maximize2 className="w-4 h-4 text-gray-700 group-hover:text-red-600" />
-        </button>
-      </div>
-    </div>
-  );
-};
-
 const MapView = ({ cases, onCaseHover, onCaseLeave, onCaseClick, onCaseSelect, onViewDetails }: MapViewProps) => {
-  // Kenya's center point (geographical center of Kenya)
-  const kenyaCenter: [number, number] = [-0.0236, 37.9062];
-
-  // Kenya's bounding box (properly fitted to Kenya borders)
-  const kenyaBounds: LatLngBoundsExpression = [
-    [ -4.7, 33.9 ], // Southwest (Lunga Lunga, Kwale)
-    [ 5.0, 41.9 ]   // Northeast (Mandera)
-  ];
-  // Tighter bounds for mobile (zoom in more to Nairobi area)
-  const kenyaMobileBounds: LatLngBoundsExpression = [
-    [ -1.5, 36.6 ], // Southwest (just below Nairobi)
-    [ 1.5, 38.2 ]   // Northeast (just above Nairobi, toward Meru)
-  ];
+  const kenyaCenter: [number, number] = [37.9062, -0.0236]; // [longitude, latitude]
   const isMobile = useIsMobile();
-  const mapRef = useRef<any>(null);
-  const [selectedPin, setSelectedPin] = useState<string | null>(null);
+  const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const [clickedPin, setClickedPin] = useState<string | null>(null);
-  const { isMobile: sidebarIsMobile, setOpenMobile } = useSidebar();
+  const mapRef = useRef<MapRef>(null);
+  const hoverShowTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Zoom to pin when clicked (not on hover)
-  useEffect(() => {
-    if (clickedPin && mapRef.current) {
-      const map = mapRef.current;
-      const pin = cases.find(c => c.id === clickedPin);
-      if (pin) {
-        map.flyTo(pin.coordinates, 15, { duration: 0.7 });
-      }
+  const kenyaBounds: [[number, number], [number, number]] = [
+    [32, -6],
+    [43, 7]
+  ];
+
+  const handleMapLoad = () => {
+    if (mapRef.current) {
+      mapRef.current.fitBounds(kenyaBounds, {
+        padding: isMobile ? 30 : 50,
+        duration: 0
+      });
     }
-  }, [clickedPin, cases]);
+  };
 
   const getTypeLabel = (type: Case['type']) => {
-    switch (type) {
-      case 'death': return 'Death';
-      case 'assault': return 'Physical Assault';
-      case 'harassment': return 'Harassment';
-      case 'unlawful_arrest': return 'Unlawful Arrest';
-      case 'abduction': return 'Abduction';
-      case 'other': return 'Other';
-      default: return type;
-    }
+    const labels: Record<Case['type'], string> = {
+      'death': 'Death',
+      'assault': 'Assault',
+      'harassment': 'Harassment',
+      'unlawful_arrest': 'Unlawful Arrest',
+      'abduction': 'Abduction',
+      'other': 'Other'
+    };
+    return labels[type] || type;
   };
 
   const getTypeColor = (type: Case['type']) => {
-    switch (type) {
-      case 'death': return 'text-red-700 bg-red-50';
-      case 'assault': return 'text-orange-700 bg-orange-50';
-      case 'harassment': return 'text-yellow-700 bg-yellow-50';
-      case 'unlawful_arrest': return 'text-purple-700 bg-purple-50';
-      case 'abduction': return 'text-violet-700 bg-violet-50';
-      default: return 'text-gray-700 bg-gray-50';
+    const colors: Record<Case['type'], string> = {
+      'death': 'bg-red-100 text-red-700',
+      'assault': 'bg-orange-100 text-orange-700',
+      'harassment': 'bg-yellow-100 text-yellow-700',
+      'unlawful_arrest': 'bg-purple-100 text-purple-700',
+      'abduction': 'bg-violet-100 text-violet-700',
+      'other': 'bg-gray-100 text-gray-700'
+    };
+    return colors[type] || 'bg-gray-100 text-gray-700';
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      'confirmed': 'Confirmed',
+      'unconfirmed': 'Pending Verification',
+      'rejected': 'Rejected'
+    };
+    return labels[status] || status;
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      'confirmed': 'bg-green-100 text-green-700',
+      'unconfirmed': 'bg-amber-100 text-amber-700',
+      'rejected': 'bg-gray-100 text-gray-600'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-600';
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+
+  const formatLocation = (location: string, county: string) => {
+    // Deduplicate if location and county are the same
+    if (location.toLowerCase() === county.toLowerCase()) {
+      return county;
     }
+    return `${location}, ${county}`;
+  };
+
+  const formatVictimName = (name: string) => {
+    if (!name || name.toLowerCase() === 'unknown' || name.trim() === '') {
+      return 'Name not available';
+    }
+    return name;
   };
 
   return (
     <div className="absolute inset-0">
-      <MapContainer
-        bounds={isMobile ? kenyaMobileBounds : kenyaBounds}
-        boundsOptions={{ padding: isMobile ? [10, 10] : [50, 50] }}
-        className="w-full h-full"
-        zoomControl={false}
-        preferCanvas={true}
+      <Map
         ref={mapRef}
+        initialViewState={{
+          longitude: kenyaCenter[0],
+          latitude: kenyaCenter[1],
+          zoom: 5.5,
+        }}
+        style={{ width: '100%', height: '100%' }}
+        mapStyle="https://tiles.openfreemap.org/styles/bright"
         minZoom={5}
         maxZoom={18}
-        scrollWheelZoom={true}
-        doubleClickZoom={true}
-        touchZoom={true}
+        onLoad={handleMapLoad}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        {/* Custom Zoom Control */}
-        <ZoomControl kenyaBounds={isMobile ? kenyaMobileBounds : kenyaBounds} />
-        
+        <NavigationControl position="bottom-right" />
+
         {cases.map((caseItem) => {
-          // Determine if case is verified or needs verification
           const isVerified = caseItem.community_verified;
           const needsVerification = caseItem.needs_verification ?? true;
-          
-          // Select appropriate icon based on verification status
-          const markerIcon = needsVerification && !isVerified
-            ? (isMobile ? personRedIconMobileUnverified : personRedIconDesktopUnverified)
-            : (isMobile ? personRedIconMobile : personRedIconDesktop);
-          
+          const isHovered = hoveredPin === caseItem.id;
+          const isClicked = clickedPin === caseItem.id;
+          const isActive = isHovered || isClicked;
+
           return (
-          <Marker
-            key={caseItem.id}
-            position={caseItem.coordinates}
-            icon={markerIcon}
-            eventHandlers={{
-              mouseover: (e) => {
-                if (!isMobile && !clickedPin) {
-                  setSelectedPin(caseItem.id);
-                  // Open popup on hover only if nothing is clicked
-                  e.target.openPopup();
+            <Marker
+              key={caseItem.id}
+              longitude={caseItem.coordinates[1]}
+              latitude={caseItem.coordinates[0]}
+              anchor="bottom"
+              onClick={(e) => {
+                e.originalEvent.stopPropagation();
+                if (mapRef.current) {
+                  mapRef.current.flyTo({
+                    center: [caseItem.coordinates[1], caseItem.coordinates[0]],
+                    zoom: 15,
+                    duration: 700
+                  });
                 }
-              },
-              mouseout: (e) => {
-                if (!isMobile && !clickedPin) {
-                  setSelectedPin(null);
-                  // Close popup on mouse leave only if nothing is clicked
-                  e.target.closePopup();
-                }
-              },
-              click: (e) => {
-                // Clear any previous selections
-                setSelectedPin(null);
-
-                // Set as clicked pin to keep popup open
                 setClickedPin(caseItem.id);
-                setSelectedPin(caseItem.id);
-                e.target.openPopup();
-              }
-            }}
-          >
-            {/* Highlight effect for selected pin */}
-            {selectedPin === caseItem.id && (
-              <div className="leaflet-marker-selected" style={{ position: 'absolute', left: -10, top: -10, width: 34, height: 34, pointerEvents: 'none' }}>
-                <div style={{ width: 34, height: 34, borderRadius: '50%', border: '2px solid #EF4444', boxShadow: '0 0 8px 2px #EF4444', opacity: 0.5 }} />
-              </div>
-            )}
-            <Popup
-              className="custom-popup"
-              closeButton={false}
-              autoClose={true}
-              closeOnEscapeKey={true}
-              autoPan={false}
+                setHoveredPin(null);
+                if (onCaseClick) {
+                  onCaseClick(caseItem, { x: 0, y: 0 });
+                }
+              }}
             >
-              <div className="min-w-[250px] max-w-[300px] p-2">
-                <h3 className="font-semibold text-base mb-2 text-gray-900">{caseItem.victimName}</h3>
-                <div className="space-y-1 text-sm text-gray-600 mb-3">
-                  <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(caseItem.type)}`}>
-                    {getTypeLabel(caseItem.type)}
-                  </div>
-                  <p className="mt-2">{caseItem.location}, {caseItem.county}</p>
-                  <p>{new Date(caseItem.date).toLocaleDateString()}</p>
+              {/* Buffer zone around marker for stable hover */}
+              <div
+                className="relative"
+                style={{ padding: '12px', margin: '-12px' }}
+                onMouseEnter={() => {
+                  if (!isMobile && !clickedPin) {
+                    // Clear any pending hide timeout
+                    if (hoverHideTimeoutRef.current) {
+                      clearTimeout(hoverHideTimeoutRef.current);
+                      hoverHideTimeoutRef.current = null;
+                    }
+                    // Clear any pending show timeout
+                    if (hoverShowTimeoutRef.current) {
+                      clearTimeout(hoverShowTimeoutRef.current);
+                    }
+                    // Add delay before showing popup (300ms)
+                    hoverShowTimeoutRef.current = setTimeout(() => {
+                      setHoveredPin(caseItem.id);
+                      hoverShowTimeoutRef.current = null;
+                    }, 300);
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isMobile && !clickedPin) {
+                    // Clear any pending show timeout
+                    if (hoverShowTimeoutRef.current) {
+                      clearTimeout(hoverShowTimeoutRef.current);
+                      hoverShowTimeoutRef.current = null;
+                    }
+                    // Delay hiding popup to allow cursor to move to popup (100ms)
+                    if (hoverHideTimeoutRef.current) {
+                      clearTimeout(hoverHideTimeoutRef.current);
+                    }
+                    hoverHideTimeoutRef.current = setTimeout(() => {
+                      setHoveredPin(null);
+                      hoverHideTimeoutRef.current = null;
+                    }, 100);
+                  }
+                }}
+              >
+                <div
+                  className={`cursor-pointer ${isActive ? 'scale-125' : ''} transition-transform`}
+                  style={{ width: isMobile ? 14 : 18, height: isMobile ? 14 : 18 }}
+                >
+                  <svg viewBox="0 0 24 24" fill="#EF4444" className="w-full h-full">
+                    <circle cx="12" cy="8" r="5" />
+                    <rect x="4" y="15" width="16" height="6" rx="3" />
+                  </svg>
+                  {needsVerification && !isVerified && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white">
+                      ?
+                    </div>
+                  )}
+                  {isActive && (
+                    <div className="absolute inset-0 rounded-full border-2 border-red-500 animate-ping opacity-75" />
+                  )}
                 </div>
-
-                {/* Show "See More Details" button when clicked or on mobile */}
-                {(clickedPin === caseItem.id || isMobile) && (
-                  <div className="mt-3 space-y-2">
-                    <button
-                      className="w-full bg-red-600 text-white rounded-lg py-2 font-semibold text-sm hover:bg-red-700 transition"
-                      onClick={() => {
-                        // Open detailed modal for both mobile and desktop
-                        if (onViewDetails) {
-                          onViewDetails(caseItem);
-                        } else if (onCaseSelect) {
-                          onCaseSelect(caseItem);
-                        }
-                      }}
-                    >
-                      See More Details
-                    </button>
-
-                    {/* Close button for clicked state */}
-                    {clickedPin === caseItem.id && !isMobile && (
-                      <button
-                        className="w-full bg-gray-200 text-gray-700 rounded-lg py-1 text-xs hover:bg-gray-300 transition"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setClickedPin(null);
-                          setSelectedPin(null);
-                          // Close the popup
-                          const target = e.target as HTMLElement;
-                          const popup = target.closest('.leaflet-popup');
-                          if (popup && (popup as any)._source) {
-                            (popup as any)._source.closePopup();
-                          }
-                        }}
-                      >
-                        Close
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
-            </Popup>
-          </Marker>
+            </Marker>
           );
         })}
-      </MapContainer>
+
+        {/* Popup for hovered or clicked marker */}
+        {(hoveredPin || clickedPin) && (() => {
+          const activePin = clickedPin || hoveredPin;
+          const caseItem = cases.find(c => c.id === activePin);
+          if (!caseItem) return null;
+          const isClickedState = clickedPin === caseItem.id;
+
+          return (
+            <Popup
+              longitude={caseItem.coordinates[1]}
+              latitude={caseItem.coordinates[0]}
+              anchor="bottom"
+              onClose={() => {
+                setClickedPin(null);
+                setHoveredPin(null);
+              }}
+              closeButton={false}
+              closeOnClick={false}
+              className="custom-popup"
+              maxWidth="280px"
+            >
+              <div
+                className="p-4 overflow-hidden relative"
+                onMouseEnter={() => {
+                  // Clear any pending hide timeout
+                  if (hoverHideTimeoutRef.current) {
+                    clearTimeout(hoverHideTimeoutRef.current);
+                    hoverHideTimeoutRef.current = null;
+                  }
+                }}
+                onMouseLeave={() => {
+                  // Clear hover when cursor leaves popup (only if not clicked)
+                  if (!clickedPin) {
+                    if (hoverHideTimeoutRef.current) {
+                      clearTimeout(hoverHideTimeoutRef.current);
+                    }
+                    hoverHideTimeoutRef.current = setTimeout(() => {
+                      setHoveredPin(null);
+                      hoverHideTimeoutRef.current = null;
+                    }, 100);
+                  }
+                }}
+              >
+                {/* Close button (X) - always visible */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setClickedPin(null);
+                    setHoveredPin(null);
+                  }}
+                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 transition z-10"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+
+                {/* Same card for both hover and click */}
+                <div className="flex items-start justify-between gap-2 mb-3 pr-6">
+                  <h3 className="font-bold text-base text-gray-900 leading-tight flex-1">
+                    {formatVictimName(caseItem.victimName)}
+                  </h3>
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap ${getStatusColor(caseItem.status)}`}>
+                    {getStatusLabel(caseItem.status)}
+                  </span>
+                </div>
+
+                <div className="mb-3">
+                  <span className={`inline-block text-xs px-2.5 py-1 rounded-full font-medium ${getTypeColor(caseItem.type)}`}>
+                    {getTypeLabel(caseItem.type)}
+                  </span>
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <svg className="w-4 h-4 flex-shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span className="truncate">{formatLocation(caseItem.location, caseItem.county)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <svg className="w-4 h-4 flex-shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>{formatDate(caseItem.date)}</span>
+                  </div>
+                </div>
+
+                <button
+                  className="w-full bg-red-600 text-white rounded-lg py-2.5 font-semibold text-sm hover:bg-red-700 transition"
+                  onClick={() => {
+                    if (onViewDetails) {
+                      onViewDetails(caseItem);
+                    } else if (onCaseSelect) {
+                      onCaseSelect(caseItem);
+                    }
+                  }}
+                >
+                  See More Details
+                </button>
+              </div>
+            </Popup>
+          );
+        })()}
+      </Map>
 
       {/* Empty state overlay */}
       {cases.length === 0 && (
@@ -320,11 +332,9 @@ const MapView = ({ cases, onCaseHover, onCaseLeave, onCaseClick, onCaseSelect, o
         </div>
       )}
 
-
-
-      {/* Mobile attribution */}
+      {/* Attribution */}
       <div className="absolute bottom-1 right-1 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded pointer-events-none z-20">
-        © OpenStreetMap
+        © MapLibre | © OpenStreetMap
       </div>
     </div>
   );

@@ -106,10 +106,10 @@ const StructuredData = ({ cases = [], pageType = 'home', currentCase }: Structur
   const getWebSiteStructuredData = () => ({
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "PoliceBrutalityTracker - Justice through visibility",
+    "name": "PoliceBrutalityTracker - Police incident data from Kenya",
     "alternateName": "PoliceBrutalityTracker Kenya",
     "url": "https://policebrutalitytracker.co.ke",
-    "description": "Interactive platform mapping incidents of police brutality across Kenya. Track, report, and visualize cases of police misconduct. Justice through visibility and transparency.",
+    "description": "Interactive platform visualizing police incident data from Kenya. Aggregated from human rights organizations, media reports, and citizen submissions. Public data, organized and visualized.",
     "inLanguage": "en-KE",
     "isAccessibleForFree": true,
     "publisher": {
@@ -139,7 +139,7 @@ const StructuredData = ({ cases = [], pageType = 'home', currentCase }: Structur
         "name": "What is PoliceBrutalityTracker?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "PoliceBrutalityTracker is an interactive platform that maps incidents of police brutality across Kenya to promote justice through visibility and transparency."
+          "text": "PoliceBrutalityTracker is an interactive platform that visualizes police incident data from Kenya. Data is aggregated from human rights organizations, media reports, and citizen submissions into one centralized place."
         }
       },
       {

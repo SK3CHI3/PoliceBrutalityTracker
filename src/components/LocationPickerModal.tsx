@@ -1,30 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import { X, MapPin, Check, AlertTriangle, Search, Loader2 } from 'lucide-react';
+import Map, { Marker, NavigationControl, useMap } from 'react-map-gl/maplibre';
+import { X, MapPin, Check, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-// Fix for default markers in React Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Custom red marker for location selection
-const redMarker = new L.Icon({
-  iconUrl: 'data:image/svg+xml;utf8,<svg width="25" height="41" viewBox="0 0 25 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 0C5.596 0 0 5.596 0 12.5C0 19.404 12.5 41 12.5 41S25 19.404 25 12.5C25 5.596 19.404 0 12.5 0ZM12.5 17C10.015 17 8 14.985 8 12.5C8 10.015 10.015 8 12.5 8C14.985 8 17 10.015 17 12.5C17 14.985 14.985 17 12.5 17Z" fill="%23EF4444"/></svg>',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowUrl: undefined,
-});
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 interface LocationData {
   latitude: number;
@@ -56,26 +38,38 @@ interface SearchResult {
 
 // Component to handle map clicks
 const MapClickHandler = ({ onLocationClick }: { onLocationClick: (lat: number, lng: number) => void }) => {
-  useMapEvents({
-    click: (e) => {
-      onLocationClick(e.latlng.lat, e.latlng.lng);
-    },
-  });
+  const { current: map } = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    const handleClick = (e: any) => {
+      onLocationClick(e.lngLat.lat, e.lngLat.lng);
+    };
+
+    map.on('click', handleClick);
+    return () => {
+      map.off('click', handleClick);
+    };
+  }, [map, onLocationClick]);
+
   return null;
 };
 
 // Component to fly map to a location
 const FlyToLocation = ({ position }: { position: [number, number] | null }) => {
-  const map = useMap();
-  
+  const { current: map } = useMap();
+
   useEffect(() => {
-    if (position) {
-      map.flyTo(position, 14, {
-        duration: 1.5,
+    if (position && map) {
+      map.flyTo({
+        center: [position[1], position[0]], // [longitude, latitude]
+        zoom: 14,
+        duration: 1500,
       });
     }
   }, [position, map]);
-  
+
   return null;
 };
 
@@ -94,12 +88,14 @@ const LocationPickerModal = ({ onClose, onLocationSelect, initialLocation }: Loc
   const { toast } = useToast();
 
   // Nairobi center coordinates (more precise)
-  const nairobCenter: [number, number] = [-1.2921, 36.8219];
+  const nairobCenter: [number, number] = [36.8219, -1.2921]; // [longitude, latitude]
 
   // Kenya's bounding box (for reference, but we'll make it less restrictive)
-  const kenyaBounds: [[number, number], [number, number]] = [
-    [-5.0, 33.0], // Southwest (expanded)
-    [6.0, 42.0]   // Northeast (expanded)
+  const kenyaBounds: [number, number, number, number] = [
+    33.0,  // min longitude (west)
+    -5.0,  // min latitude (south)
+    42.0,  // max longitude (east)
+    6.0    // max latitude (north)
   ];
 
   // Search for locations using Nominatim API
@@ -296,31 +292,33 @@ const LocationPickerModal = ({ onClose, onLocationSelect, initialLocation }: Loc
           <div className="grid grid-cols-1 lg:grid-cols-3 h-[500px]">
             {/* Map */}
             <div className="lg:col-span-2 relative">
-              <MapContainer
-                center={selectedPosition || nairobCenter}
-                zoom={selectedPosition ? 14 : 10}
-                className="w-full h-full"
-                scrollWheelZoom={true}
-                dragging={true}
-                touchZoom={true}
-                doubleClickZoom={true}
-                zoomControl={true}
-                attributionControl={true}
+              <Map
+                initialViewState={{
+                  longitude: selectedPosition ? selectedPosition[1] : nairobCenter[0],
+                  latitude: selectedPosition ? selectedPosition[0] : nairobCenter[1],
+                  zoom: selectedPosition ? 14 : 10,
+                }}
+                style={{ width: '100%', height: '100%' }}
+                mapStyle="https://tiles.openfreemap.org/styles/bright"
                 maxZoom={18}
                 minZoom={2}
               >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                
+                <NavigationControl position="top-right" />
                 <MapClickHandler onLocationClick={handleMapClick} />
                 <FlyToLocation position={selectedPosition} />
-                
+
                 {selectedPosition && (
-                  <Marker position={selectedPosition} icon={redMarker} />
+                  <Marker
+                    longitude={selectedPosition[1]}
+                    latitude={selectedPosition[0]}
+                    anchor="bottom"
+                  >
+                    <svg width="25" height="41" viewBox="0 0 25 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12.5 0C5.596 0 0 5.596 0 12.5C0 19.404 12.5 41 12.5 41S25 19.404 25 12.5C25 5.596 19.404 0 12.5 0ZM12.5 17C10.015 17 8 14.985 8 12.5C8 10.015 10.015 8 12.5 8C14.985 8 17 10.015 17 12.5C17 14.985 14.985 17 12.5 17Z" fill="#EF4444"/>
+                    </svg>
+                  </Marker>
                 )}
-              </MapContainer>
+              </Map>
               
               {/* Instructions overlay */}
               {!selectedPosition && (

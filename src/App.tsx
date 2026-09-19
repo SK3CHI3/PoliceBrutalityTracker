@@ -28,11 +28,6 @@ const LazyNewsDetailModal = lazy(() => import("./components/NewsDetailModal"));
 const queryClient = new QueryClient();
 
 // Old /blog URLs keep working — everything is news now
-const BlogSlugRedirect = () => {
-  const { slug } = useParams();
-  return <Navigate to={`/news/${slug}`} replace />;
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -50,8 +45,6 @@ const App = () => (
             <Route path="/case/:id" element={<CasePage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/news/:slug" element={<NewsPostPage />} />
-            <Route path="/blog" element={<Navigate to="/news" replace />} />
-            <Route path="/blog/:slug" element={<BlogSlugRedirect />} />
             <Route path="/sys-mgmt-portal-auth" element={<AdminLogin />} />
             <Route
               path="/sys-mgmt-portal"

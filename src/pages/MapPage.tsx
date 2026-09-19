@@ -99,7 +99,7 @@ const MapPage = () => {
           onSubmitCase={() => setIsSubmitModalOpen(true)}
           caseCount={filteredCases.length}
         />
-        <div className="flex flex-1">
+        <div className="flex flex-1 min-h-0">
           <Sidebar>
             <DataSidebar
               filters={filters}
@@ -109,13 +109,11 @@ const MapPage = () => {
               cases={cases}
             />
           </Sidebar>
-          <div className="flex-1 relative">
+          <div className="flex-1 relative min-h-0">
             <MapView
               cases={filteredCases}
               onViewDetails={(caseItem) => setSelectedCase(caseItem)}
             />
-
-
           </div>
         </div>
 

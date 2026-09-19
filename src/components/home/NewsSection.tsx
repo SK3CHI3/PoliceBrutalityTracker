@@ -33,8 +33,8 @@ const ResearchCard = ({
   index: number;
   onClick: () => void;
 }) => {
-  const articleUrl = article.slug
-    ? `${window.location.origin}/news/${article.slug}`
+  const articleUrl = article.id
+    ? `${window.location.origin}/news/${article.id}`
     : article.url && article.url !== '#'
       ? article.url
       : null;

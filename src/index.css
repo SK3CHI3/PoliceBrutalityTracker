@@ -432,3 +432,50 @@
 .theme-light svg line {
   stroke: rgba(15, 23, 42, 0.08);
 }
+
+/* Export utilities for PNG downloads */
+.export-only {
+  display: none;
+}
+
+.no-export {
+  display: block;
+}
+
+/* MapLibre popup custom styling - rounded corners */
+.custom-popup .maplibregl-popup-content {
+  border-radius: 12px !important;
+  padding: 0 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.custom-popup .maplibregl-popup-tip {
+  border-top-color: white !important;
+}
+
+.custom-popup .maplibregl-popup-close-button {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  background: rgba(0, 0, 0, 0.1) !important;
+  color: #666 !important;
+  font-size: 18px !important;
+  line-height: 24px !important;
+  padding: 0 !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s !important;
+  z-index: 10 !important;
+}
+
+.custom-popup .maplibregl-popup-close-button:hover {
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: #333 !important;
+}

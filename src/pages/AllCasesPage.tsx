@@ -80,7 +80,7 @@ const AllNewsPage = () => {
               </Button>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold">Latest News & Reports</h1>
-                <p className="text-gray-400 text-sm md:text-base">Stay informed with the latest developments and editorial content</p>
+                <p className="text-gray-400 text-sm md:text-base">Public incident data from multiple sources, centralized</p>
               </div>
             </div>
             <Button

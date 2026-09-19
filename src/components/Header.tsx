@@ -40,7 +40,7 @@ const Header = ({ onOpenFilters, onSubmitCase, caseCount }: HeaderProps) => {
             </div>
             <div>
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white">PoliceBrutalityTracker</h1>
-              <p className="text-xs text-gray-400 hidden sm:block">Justice through visibility</p>
+              <p className="text-xs text-gray-400 hidden sm:block">Public data, visualized</p>
             </div>
           </div>
         </div>

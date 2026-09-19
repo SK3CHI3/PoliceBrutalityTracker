@@ -6,6 +6,7 @@ User-agent: GPTBot
 Allow: /
 Allow: /map
 Allow: /cases
+Allow: /news
 Disallow: /sys-mgmt-portal
 Disallow: /sys-mgmt-portal-auth
 
@@ -14,6 +15,7 @@ User-agent: ChatGPT-User
 Allow: /
 Allow: /map
 Allow: /cases
+Allow: /news
 Disallow: /sys-mgmt-portal
 Disallow: /sys-mgmt-portal-auth
 
@@ -22,6 +24,7 @@ User-agent: anthropic-ai
 Allow: /
 Allow: /map
 Allow: /cases
+Allow: /news
 Disallow: /sys-mgmt-portal
 Disallow: /sys-mgmt-portal-auth
 
@@ -29,6 +32,7 @@ User-agent: ClaudeBot
 Allow: /
 Allow: /map
 Allow: /cases
+Allow: /news
 Disallow: /sys-mgmt-portal
 Disallow: /sys-mgmt-portal-auth
 
@@ -37,6 +41,14 @@ User-agent: Google-Extended
 Allow: /
 Allow: /map
 Allow: /cases
+Allow: /news
+Disallow: /sys-mgmt-portal
+Disallow: /sys-mgmt-portal-auth
+
+# Google News
+User-agent: Googlebot-News
+Allow: /
+Allow: /news
 Disallow: /sys-mgmt-portal
 Disallow: /sys-mgmt-portal-auth
 
@@ -45,6 +57,7 @@ User-agent: PerplexityBot
 Allow: /
 Allow: /map
 Allow: /cases
+Allow: /news
 Disallow: /sys-mgmt-portal
 Disallow: /sys-mgmt-portal-auth
 
@@ -53,6 +66,7 @@ User-agent: YouBot
 Allow: /
 Allow: /map
 Allow: /cases
+Allow: /news
 Disallow: /sys-mgmt-portal
 Disallow: /sys-mgmt-portal-auth
 
@@ -61,6 +75,7 @@ User-agent: Applebot-Extended
 Allow: /
 Allow: /map
 Allow: /cases
+Allow: /news
 Disallow: /sys-mgmt-portal
 Disallow: /sys-mgmt-portal-auth
 
@@ -80,6 +95,7 @@ Allow: /map
 Allow: /cases
 Allow: /cases-index
 Allow: /case/
+Allow: /news
 Allow: /
 
 # Sitemap for easy discovery
@@ -88,3 +104,5 @@ Sitemap: https://policebrutalitytracker.co.ke/sitemap.xml
 # Note to AI crawlers:
 # Individual case pages are at /case/{id}
 # Complete case index is at /cases-index
+# News articles are at /news/{id}
+# News index is at /news

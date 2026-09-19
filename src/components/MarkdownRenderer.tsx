@@ -7,20 +7,86 @@ interface MarkdownRendererProps {
 
 const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
   return (
-    <div className="prose prose-invert prose-lg max-w-none
-      prose-headings:text-white prose-headings:font-bold
-      prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl
-      prose-p:text-gray-300 prose-p:leading-relaxed
-      prose-a:text-red-400 prose-a:no-underline hover:prose-a:underline
-      prose-strong:text-white
-      prose-blockquote:border-red-500 prose-blockquote:text-gray-300 prose-blockquote:bg-white/5 prose-blockquote:py-2 prose-blockquote:px-6 prose-blockquote:rounded-r-lg
-      prose-li:text-gray-300
-      prose-img:rounded-xl prose-img:shadow-2xl prose-img:mx-auto
-      prose-code:text-red-300 prose-code:bg-white/5 prose-code:px-1 prose-code:rounded
-    ">
+    <div className="article-content max-w-none">
       <ReactMarkdown remarkPlugins={[remarkGfm]}>
         {content}
       </ReactMarkdown>
+      
+      <style>{`
+        .article-content {
+          font-size: 1.125rem;
+          line-height: 1.8;
+          color: #e5e7eb;
+        }
+        
+        .article-content p {
+          margin-bottom: 1.5rem;
+          color: #d1d5db;
+        }
+        
+        .article-content h1 {
+          font-size: 2.5rem;
+          font-weight: 700;
+          color: #ffffff;
+          margin-top: 2rem;
+          margin-bottom: 1rem;
+        }
+        
+        .article-content h2 {
+          font-size: 2rem;
+          font-weight: 700;
+          color: #ffffff;
+          margin-top: 2rem;
+          margin-bottom: 1rem;
+        }
+        
+        .article-content h3 {
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: #ffffff;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
+        }
+        
+        .article-content a {
+          color: #f87171;
+          text-decoration: none;
+        }
+        
+        .article-content a:hover {
+          color: #fca5a5;
+          text-decoration: underline;
+        }
+        
+        .article-content strong {
+          color: #ffffff;
+          font-weight: 600;
+        }
+        
+        .article-content ul, .article-content ol {
+          margin-bottom: 1.5rem;
+          padding-left: 1.5rem;
+        }
+        
+        .article-content li {
+          margin-bottom: 0.5rem;
+          color: #d1d5db;
+        }
+        
+        .article-content blockquote {
+          border-left: 4px solid #dc2626;
+          padding-left: 1rem;
+          margin: 1.5rem 0;
+          background-color: rgba(255, 255, 255, 0.05);
+          padding: 1rem;
+          border-radius: 0.5rem;
+        }
+        
+        .article-content blockquote p {
+          color: #e5e7eb;
+          margin-bottom: 0;
+        }
+      `}</style>
     </div>
   );
 };

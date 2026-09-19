@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { Download, Link2, Facebook, Twitter, Mail, ChevronDown } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
+import { toPng } from 'html-to-image';
 import { Case } from '@/types';
 import { normalizeCountyName } from '@/utils/countyNormalization';
 
@@ -21,7 +22,7 @@ interface DataModulesProps {
   isLoading: boolean;
 }
 
-// 2019 Kenya census populations (Wikipedia, verified against county pages; Turkana corrected to 926,976)
+// 2019 Kenya census populations
 const COUNTY_POPULATIONS: Record<string, number> = {
   mombasa: 1208333, kwale: 866820, kilifi: 1453787, tanariver: 315943, lamu: 143920,
   taitataveta: 340671, garissa: 841353, wajir: 781263, mandera: 867457, marsabit: 459785,
@@ -40,7 +41,7 @@ const norm = (name: string) => name.toLowerCase().replace(/[^a-z]/g, '');
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const heatColor = (count: number) => {
-  if (count <= 0) return 'rgba(15,23,42,0.05)';
+  if (count <= 0) return '#f1f5f9';
   if (count === 1) return '#fca5a5';
   if (count === 2) return '#ef4444';
   return '#991b1b';
@@ -55,14 +56,14 @@ const tooltipStyle = {
   boxShadow: '0 10px 30px rgba(15,23,42,0.12)',
 };
 
-/* Inline highlighted number — MPV style */
+/* Inline highlighted number */
 const Num = ({ children }: { children: React.ReactNode }) => (
   <span className="inline-flex min-w-[2.4rem] items-center justify-center rounded-lg border-2 border-red-300 bg-red-50 px-2 py-0.5 text-red-600 font-black tabular-nums">
     {children}
   </span>
 );
 
-/* Compact inline year dropdown — MPV dotted-underline style */
+/* Year dropdown */
 const YearSelect = ({
   value,
   years,
@@ -82,6 +83,33 @@ const YearSelect = ({
       {years.map((y) => (
         <option key={y} value={y} className="bg-white font-bold text-slate-900">
           {y}
+        </option>
+      ))}
+    </select>
+    <ChevronDown className="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-red-500" />
+  </span>
+);
+
+/* County dropdown */
+const CountySelect = ({
+  value,
+  counties,
+  onChange,
+}: {
+  value: string;
+  counties: Array<{ county: string; label: string }>;
+  onChange: (c: string) => void;
+}) => (
+  <span className="relative inline-block">
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      aria-label="Select county"
+      className="cursor-pointer appearance-none border-b-2 border-dotted border-red-400/80 bg-transparent pr-5 font-bold text-red-600 focus:outline-none"
+    >
+      {counties.map((c) => (
+        <option key={c.county} value={c.county} className="bg-white font-bold text-slate-900">
+          {c.label}
         </option>
       ))}
     </select>
@@ -155,35 +183,106 @@ const ShareRow = ({ summary, onDownload }: ShareRowProps) => {
   );
 };
 
+/* Captures a card as a branded PNG — uses filter to exclude UI elements, includes branding */
+const downloadCardAsPng = async (
+  ref: React.RefObject<HTMLDivElement | null>,
+  filename: string
+) => {
+  if (!ref.current) return;
+  try {
+    // Temporarily show export-only elements
+    const exportElements = ref.current.querySelectorAll('.export-only');
+    exportElements.forEach((el) => {
+      (el as HTMLElement).style.display = 'block';
+    });
+
+    const dataUrl = await toPng(ref.current, {
+      pixelRatio: 3,
+      cacheBust: true,
+      filter: (node) => {
+        // Exclude elements with .no-export class
+        if (node instanceof HTMLElement && node.classList.contains('no-export')) {
+          return false;
+        }
+        return true;
+      },
+    });
+
+    // Hide export-only elements again
+    exportElements.forEach((el) => {
+      (el as HTMLElement).style.display = 'none';
+    });
+
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = filename;
+    a.click();
+  } catch (e) {
+    console.error('Download failed:', e);
+    toast.error('Could not generate image');
+  }
+};
+
+/* Simple card with ref for download */
 interface MpvCardProps {
   kicker: string;
   summary: string;
   onDownload?: () => void;
   children: React.ReactNode;
+  cardRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-const MpvCard = ({ kicker, summary, onDownload, children }: MpvCardProps) => (
-  <div className="flex flex-col overflow-hidden rounded-2xl border border-red-100 bg-gradient-to-b from-white to-[#FDF8F6] shadow-sm">
+const MpvCard = ({ kicker, summary, onDownload, children, cardRef }: MpvCardProps) => (
+  <div ref={cardRef} className="flex flex-col overflow-hidden rounded-2xl border border-red-100 bg-gradient-to-b from-white to-[#FDF8F6] shadow-sm">
+    {/* Export-only branding header */}
+    <div className="export-only" style={{ padding: '20px 24px 14px', borderBottom: '2px solid #fecaca' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ width: '5px', height: '28px', background: '#dc2626', borderRadius: '3px', flexShrink: 0 }} />
+        <div>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.2 }}>PoliceBrutalityTracker</div>
+          <div style={{ fontSize: '10px', fontWeight: 600, color: '#dc2626', letterSpacing: '0.08em', marginTop: '1px' }}>PUBLIC DATA, ORGANIZED AND VISUALIZED</div>
+        </div>
+      </div>
+    </div>
+
     <div className="flex-1 p-6 sm:p-7">
       <div className="mb-4 text-[10px] font-bold uppercase tracking-[0.25em] text-red-600/80">{kicker}</div>
       {children}
     </div>
-    <div className="border-t border-red-100 bg-[#FDF6F4] px-6 py-3">
+
+    {/* Export-only branding footer */}
+    <div className="export-only" style={{ padding: '12px 24px', borderTop: '2px solid #fecaca', background: '#FDF6F4' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>policebrutalitytracker.co.ke</span>
+      </div>
+    </div>
+
+    {/* ShareRow - excluded from export */}
+    <div className="no-export border-t border-red-100 bg-[#FDF6F4] px-6 py-3">
       <ShareRow summary={summary} onDownload={onDownload} />
     </div>
   </div>
 );
 
+const parseDate = (s: string) => {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+
 const DataModules = ({ cases, isLoading }: DataModulesProps) => {
-  const heatRef = useRef<HTMLDivElement>(null);
-  const lineRef = useRef<HTMLDivElement>(null);
-  const barRef = useRef<HTMLDivElement>(null);
   const [hoverDay, setHoverDay] = useState<{ label: string; count: number } | null>(null);
+
+  // Card refs for PNG download
+  const recordCardRef = useRef<HTMLDivElement>(null);
+  const tollCardRef = useRef<HTMLDivElement>(null);
+  const heatmapCardRef = useRef<HTMLDivElement>(null);
+  const perCapitaCardRef = useRef<HTMLDivElement>(null);
+  const yearOnYearCardRef = useRef<HTMLDivElement>(null);
 
   const deaths = useMemo(() => {
     return (cases || [])
       .filter((c) => c.type === 'death')
-      .map((c) => ({ date: new Date(c.date), county: c.county }))
+      .map((c) => ({ date: parseDate(c.date), county: c.county }))
       .filter((d) => !isNaN(d.date.getTime()));
   }, [cases]);
 
@@ -221,7 +320,6 @@ const DataModules = ({ cases, isLoading }: DataModulesProps) => {
 
   const daysWithDeaths = dailyCounts.size;
 
-  // Same-period comparison with previous year
   const prevComparison = useMemo(() => {
     const prevYear = year - 1;
     const cutoff =
@@ -269,20 +367,6 @@ const DataModules = ({ cases, isLoading }: DataModulesProps) => {
       .map((x) => ({ ...x, label: x.county.charAt(0).toUpperCase() + x.county.slice(1) }));
   }, [deaths]);
 
-  const downloadSvg = (ref: React.RefObject<HTMLDivElement | null>, filename: string) => {
-    const svg = ref.current?.querySelector('svg');
-    if (!svg) return;
-    const clone = svg.cloneNode(true) as SVGSVGElement;
-    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
-
-  // Year-calendar heatmap geometry: 12 month blocks in a 4x3 grid, days in 7-column weeks
   const CELL = 10;
   const STEP = 13;
   const BLOCK_W = 7 * STEP;
@@ -303,19 +387,45 @@ const DataModules = ({ cases, isLoading }: DataModulesProps) => {
     const counties = new Set(all.map((c) => norm(normalizeCountyName(c.county))));
     let earliestYear: number | null = null;
     for (const c of all) {
-      const d = new Date(c.date);
+      const d = parseDate(c.date);
       if (!isNaN(d.getTime())) {
         const y = d.getFullYear();
         if (earliestYear === null || y < earliestYear) earliestYear = y;
       }
     }
+    
+    // Calculate death rate percentage
+    const totalCases = all.length;
+    const deathsCount = deaths.length;
+    const deathRatePercent = totalCases > 0 
+      ? Math.round((deathsCount / totalCases) * 100) 
+      : 0;
+    
+    // Calculate Nairobi percentage of total cases
+    const nairobiCases = all.filter(c => 
+      norm(normalizeCountyName(c.county)) === 'nairobi'
+    ).length;
+    const nairobiPercent = totalCases > 0 
+      ? Math.round((nairobiCases / totalCases) * 100) 
+      : 0;
+    
     return {
-      totalCases: all.length,
+      totalCases,
       countiesCount: counties.size,
       earliestYear,
-      deathsCount: deaths.length,
+      deathsCount,
+      deathRatePercent,
+      nairobiPercent,
     };
   }, [cases, deaths]);
+
+  // Headline text helpers
+  const tollHeadline = year === currentYear
+    ? 'Police have killed'
+    : 'Police killed';
+  const tollSuffix = year === currentYear ? 'so far in' : 'in';
+  const daysHeadline = year === currentYear ? 'There have been' : 'There were';
+  const daysSuffix = year === currentYear ? 'days so far in' : 'days in';
 
   return (
     <section id="data" className="py-24 px-4 sm:px-6 lg:px-8">
@@ -332,60 +442,56 @@ const DataModules = ({ cases, isLoading }: DataModulesProps) => {
           </div>
         ) : (
           <>
-          {/* The record — full-width statement card */}
-          <div className="mt-8 mb-6">
-            <MpvCard
-              kicker="The record"
-              summary={`At least ${recordStats.totalCases} documented cases of police brutality across ${recordStats.countiesCount} counties since ${recordStats.earliestYear} — including ${recordStats.deathsCount} deaths. Data at policebrutalitytracker.co.ke`}
-            >
-              <p className="text-2xl sm:text-[1.7rem] font-bold text-slate-900 leading-relaxed">
-                At least <Num>{recordStats.totalCases}</Num> documented cases of police brutality
-                across <Num>{recordStats.countiesCount}</Num> counties since{' '}
-                <Num>{recordStats.earliestYear ?? '—'}</Num> — including{' '}
-                <Num>{recordStats.deathsCount}</Num> deaths.
-              </p>
-            </MpvCard>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             {/* Left column */}
             <div className="flex flex-col gap-6">
-              {/* Card 01 — the toll sentence */}
+              {/* Card 01 — the toll */}
               <MpvCard
                 kicker="01 · The toll"
-                summary={`Police have killed ${yearDeaths.length} people in Kenya so far in ${year}. Every case documented at policebrutalitytracker.co.ke`}
+                cardRef={tollCardRef}
+                summary={`${tollHeadline} ${yearDeaths.length} people ${tollSuffix} ${year}. Every case documented at policebrutalitytracker.co.ke`}
+                onDownload={() => downloadCardAsPng(tollCardRef, `the-toll-kenya-${year}.png`)}
               >
-                <p className="text-2xl sm:text-[1.7rem] font-bold text-white leading-relaxed">
-                  Police have killed <Num>{yearDeaths.length}</Num> people in Kenya so far in{' '}
-                  <YearSelect value={year} years={years} onChange={setSelectedYear} />.
+                <p className="text-2xl sm:text-[1.7rem] font-bold text-slate-900 leading-relaxed">
+                  {year === currentYear ? (
+                    <>Police have killed <Num>{yearDeaths.length}</Num> people in Kenya so far in{' '}
+                      <YearSelect value={year} years={years} onChange={setSelectedYear} />.</>
+                  ) : (
+                    <>Police killed <Num>{yearDeaths.length}</Num> people in Kenya in{' '}
+                      <YearSelect value={year} years={years} onChange={setSelectedYear} />.</>
+                  )}
                 </p>
               </MpvCard>
 
-              {/* Card 02 — days sentence + heatmap */}
+              {/* Card 02 — day by day */}
               <MpvCard
                 kicker="02 · Day by day"
-                summary={`There have been ${daysWithDeaths} days in ${year} when police killed people in Kenya — see the day-by-day record at policebrutalitytracker.co.ke`}
-                onDownload={() => downloadSvg(heatRef, `police-killings-kenya-${year}.svg`)}
+                cardRef={heatmapCardRef}
+                summary={`${daysHeadline} ${daysWithDeaths} ${daysSuffix} ${year} when police killed people in Kenya — see the day-by-day record at policebrutalitytracker.co.ke`}
+                onDownload={() => downloadCardAsPng(heatmapCardRef, `day-by-day-kenya-${year}.png`)}
               >
-                <p className="text-lg sm:text-xl font-bold text-white leading-relaxed mb-6">
-                  There have been <Num>{daysWithDeaths}</Num> days so far in {year} when police
-                  killed people in Kenya.
+                <p className="text-lg sm:text-xl font-bold text-slate-900 leading-relaxed mb-6">
+                  {year === currentYear ? (
+                    <>There have been <Num>{daysWithDeaths}</Num> days so far in {year} when police killed people in Kenya.</>
+                  ) : (
+                    <>There were <Num>{daysWithDeaths}</Num> days in {year} when police killed people in Kenya.</>
+                  )}
                 </p>
 
-                <div ref={heatRef}>
+                <div>
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                    <h3 className="text-sm font-bold text-white">Killings by police in {year}</h3>
+                    <h3 className="text-sm font-bold text-slate-700">Killings by police in {year}</h3>
                     <div className="flex items-center gap-2">
                       {hoverDay ? (
-                        <span className="text-[11px] font-semibold text-gray-300">
-                          {hoverDay.label} — <span className="text-red-400">{hoverDay.count} {hoverDay.count === 1 ? 'death' : 'deaths'}</span>
+                        <span className="text-[11px] font-semibold text-slate-700">
+                          {hoverDay.label} — <span className="text-red-600">{hoverDay.count} {hoverDay.count === 1 ? 'death' : 'deaths'}</span>
                         </span>
                       ) : (
-                        <span className="text-[11px] text-gray-600">hover a day</span>
+                        <span className="text-[11px] text-slate-500">hover a day</span>
                       )}
-                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                      <div className="flex items-center gap-1 text-[10px] text-slate-500">
                         <span>0</span>
-                        {['rgba(15,23,42,0.05)', '#fca5a5', '#ef4444', '#991b1b'].map((c) => (
+                        {['#f1f5f9', '#fca5a5', '#ef4444', '#991b1b'].map((c) => (
                           <span key={c} className="h-3.5 w-3.5 rounded-sm" style={{ backgroundColor: c }} />
                         ))}
                         <span>3+</span>
@@ -408,7 +514,7 @@ const DataModules = ({ cases, isLoading }: DataModulesProps) => {
                         const daysInMonth = new Date(year, mi + 1, 0).getDate();
                         return (
                           <g key={m}>
-                            <text x={bx} y={by + 10} fill="#d1d5db" fontSize="10" fontWeight="700" fontFamily="sans-serif">
+                            <text x={bx} y={by + 10} fill="#475569" fontSize="10" fontWeight="700" fontFamily="sans-serif">
                               {MONTHS_SHORT[mi]}
                             </text>
                             {Array.from({ length: daysInMonth }).map((_, di) => {
@@ -445,13 +551,14 @@ const DataModules = ({ cases, isLoading }: DataModulesProps) => {
               {/* Card 03 — per capita */}
               <MpvCard
                 kicker="03 · Per capita"
+                cardRef={perCapitaCardRef}
                 summary={`${topCounty ? `${topCounty.label} records the highest rate of police killings in Kenya: ${topCounty.rate} per 1 million residents.` : 'Police killings per 1 million residents by county.'} Data at policebrutalitytracker.co.ke`}
-                onDownload={() => downloadSvg(barRef, 'killings-per-capita-kenya.svg')}
+                onDownload={() => downloadCardAsPng(perCapitaCardRef, `killings-per-capita-kenya-${years[0]}-${currentYear}.png`)}
               >
-                <p className="text-lg sm:text-xl font-bold text-white leading-relaxed mb-6">
+                <p className="text-lg sm:text-xl font-bold text-slate-900 leading-relaxed mb-6">
                   {topCounty ? (
                     <>
-                      <span className="border-b-2 border-dotted border-red-400/70 text-red-400">{topCounty.label}</span>{' '}
+                      <span className="border-b-2 border-dotted border-red-400/70 text-red-600">{topCounty.label}</span>{' '}
                       records the highest rate — <Num>{topCounty.rate}</Num> killings per 1 million
                       residents since {years[0]}.
                     </>
@@ -460,47 +567,48 @@ const DataModules = ({ cases, isLoading }: DataModulesProps) => {
                   )}
                 </p>
 
-                <div ref={barRef}>
-                  <h3 className="mb-3 text-center text-xs font-bold text-white">
+                <div>
+                  <h3 className="mb-3 text-center text-xs font-bold text-slate-700">
                     Killings per 1 million people in Kenya, {years[0]}–{currentYear}
                   </h3>
                   <ResponsiveContainer width="100%" height={260}>
                     <BarChart data={perCapita} layout="vertical" margin={{ top: 4, right: 24, bottom: 0, left: 0 }}>
-                      <CartesianGrid horizontal={false} stroke="rgba(255,255,255,0.06)" />
-                      <XAxis type="number" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <CartesianGrid horizontal={false} stroke="rgba(0,0,0,0.06)" />
+                      <XAxis type="number" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
                       <YAxis
                         type="category"
                         dataKey="label"
                         width={90}
-                        tick={{ fill: '#d1d5db', fontSize: 12 }}
+                        tick={{ fill: '#334155', fontSize: 12 }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <Tooltip
                         contentStyle={tooltipStyle}
-                        cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                        cursor={{ fill: 'rgba(0,0,0,0.04)' }}
                         formatter={(value: number) => [`${value} per 1M`, 'Rate']}
                       />
-                      <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={16} label={{ position: 'right', fill: '#9ca3af', fontSize: 11 }}>
+                      <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={16} label={{ position: 'right', fill: '#64748b', fontSize: 11 }}>
                         {perCapita.map((entry, index) => (
                           <Cell key={entry.county} fill={index === 0 ? '#ef4444' : 'rgba(148,163,184,0.45)'} />
                         ))}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
-                  <p className="mt-2 text-right text-[10px] text-gray-600">
+                  <p className="mt-2 text-right text-[10px] text-slate-500">
                     Population data from the 2019 Kenya census
                   </p>
                 </div>
               </MpvCard>
 
-              {/* Card 04 — year compare + cumulative */}
+              {/* Card 04 — year on year */}
               <MpvCard
                 kicker="04 · Year on year"
+                cardRef={yearOnYearCardRef}
                 summary={`Police have killed ${yearDeaths.length} people in Kenya in ${year}, compared with ${prevComparison.prevSamePeriod} in the same period of ${prevComparison.prevYear}. Data at policebrutalitytracker.co.ke`}
-                onDownload={() => downloadSvg(lineRef, `cumulative-killings-kenya-${year}.svg`)}
+                onDownload={() => downloadCardAsPng(yearOnYearCardRef, `year-on-year-kenya-${year}.png`)}
               >
-                <p className="text-lg sm:text-xl font-bold text-white leading-relaxed mb-6">
+                <p className="text-lg sm:text-xl font-bold text-slate-900 leading-relaxed mb-6">
                   {year === years[0] ? (
                     <>
                       {years[0]} is the first year in our record — police killed{' '}
@@ -516,15 +624,15 @@ const DataModules = ({ cases, isLoading }: DataModulesProps) => {
                   )}
                 </p>
 
-                <div ref={lineRef}>
-                  <h3 className="mb-3 text-xs font-bold text-white">
+                <div>
+                  <h3 className="mb-3 text-xs font-bold text-slate-700">
                     {deaths.length} total killings by police — cumulative by month
                   </h3>
                   <ResponsiveContainer width="100%" height={260}>
                     <LineChart data={yearlyCumulative} margin={{ top: 4, right: 8, bottom: 0, left: -24 }}>
-                      <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.06)" />
-                      <XAxis dataKey="month" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                      <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.06)" />
+                      <XAxis dataKey="month" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
                       <Tooltip contentStyle={tooltipStyle} />
                       {years.map((y) => (
                         <Line

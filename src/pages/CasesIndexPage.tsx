@@ -76,7 +76,7 @@ const CasesIndexPage = () => {
     <>
       <SEOHead
         title="All Police Brutality Cases Database | PoliceBrutalityTracker"
-        description={`Browse ${cases?.length || 'all'} documented police brutality cases across Kenya's 47 counties. Comprehensive database for transparency and accountability.`}
+        description={`Browse ${cases?.length || 'all'} documented police brutality cases across Kenya's 47 counties. Public incident data from multiple sources, centralized.`}
         keywords="police brutality cases, Kenya database, all cases, incident list, human rights violations, police accountability"
         url="https://policebrutalitytracker.co.ke/cases-index"
       />

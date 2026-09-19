@@ -14,27 +14,39 @@ export interface NewsArticle {
   published_at?: string;
   created_at: string;
   updated_at: string;
-  created_by?: string;
-  updated_by?: string;
-  source?: 'admin' | 'scraped';
-  scraped_article_id?: string;
-  slug: string;
-}
-
-export interface CreateNewsData {
-  title: string;
-  content: string;
-  excerpt?: string;
-  featured_image_url?: string;
-  author: string;
-  status?: 'draft' | 'published';
-  category?: string;
-  tags?: string[];
   slug?: string;
+  isAiGenerated?: boolean;
 }
 
-export interface UpdateNewsData extends Partial<CreateNewsData> {
+// Row shape from database
+interface NewsArticleRow {
   id: string;
+  title: string;
+  summary: string | null;
+  body: string;
+  category: string | null;
+  ai_generated: boolean | null;
+  published: boolean | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapRowToArticle(row: NewsArticleRow): NewsArticle {
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.body,
+    excerpt: row.summary || undefined,
+    author: (row.ai_generated ?? false) ? 'AI Newsroom' : 'PoliceBrutalityTracker',
+    status: row.published ? 'published' : 'draft',
+    category: row.category || 'News',
+    tags: (row.ai_generated ?? false) ? ['ai-generated'] : [],
+    published_at: row.published_at || undefined,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    isAiGenerated: row.ai_generated ?? false,
+  };
 }
 
 // Get all news articles (admin)
@@ -43,12 +55,12 @@ export function useNews() {
     queryKey: ['news'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('news')
+        .from('news_articles')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as NewsArticle[];
+      return ((data as NewsArticleRow[]) || []).map(mapRowToArticle);
     }
   });
 }
@@ -59,13 +71,13 @@ export function usePublishedNews() {
     queryKey: ['publishedNews'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('news')
+        .from('news_articles')
         .select('*')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false });
+        .eq('published', true)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as NewsArticle[];
+      return ((data as NewsArticleRow[]) || []).map(mapRowToArticle);
     }
   });
 }
@@ -76,14 +88,14 @@ export function useRecentNews(limit: number = 3) {
     queryKey: ['recentNews', limit],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('news')
+        .from('news_articles')
         .select('*')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false })
+        .eq('published', true)
+        .order('created_at', { ascending: false })
         .limit(limit);
 
       if (error) throw error;
-      return data as NewsArticle[];
+      return ((data as NewsArticleRow[]) || []).map(mapRowToArticle);
     }
   });
 }
@@ -93,20 +105,23 @@ export function useCreateNews() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (newsData: CreateNewsData) => {
+    mutationFn: async (newsData: any) => {
       const { data, error } = await supabase
-        .from('news')
+        .from('news_articles')
         .insert({
-          ...newsData,
-          slug: newsData.slug || newsData.title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-'),
-          source: 'admin',
-          published_at: newsData.status === 'published' ? new Date().toISOString() : null
+          title: newsData.title,
+          body: newsData.content,
+          summary: newsData.excerpt,
+          category: newsData.category,
+          published: newsData.status === 'published',
+          published_at: newsData.status === 'published' ? new Date().toISOString() : null,
+          ai_generated: false,
         })
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      return mapRowToArticle(data as NewsArticleRow);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['news'] });
@@ -121,26 +136,33 @@ export function useUpdateNews() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (newsData: UpdateNewsData) => {
+    mutationFn: async (newsData: any) => {
       const { id, ...updateData } = newsData;
 
-      // Set published_at when status changes to published
-      const publishedAt = updateData.status === 'published' ? new Date().toISOString() : undefined;
+      const dbUpdate: any = {
+        updated_at: new Date().toISOString(),
+      };
 
-      // Don't regenerate slug from title - preserve existing slug unless explicitly provided
+      if (updateData.title !== undefined) dbUpdate.title = updateData.title;
+      if (updateData.content !== undefined) dbUpdate.body = updateData.content;
+      if (updateData.excerpt !== undefined) dbUpdate.summary = updateData.excerpt;
+      if (updateData.category !== undefined) dbUpdate.category = updateData.category;
+      if (updateData.status !== undefined) {
+        dbUpdate.published = updateData.status === 'published';
+        if (updateData.status === 'published') {
+          dbUpdate.published_at = new Date().toISOString();
+        }
+      }
+
       const { data, error } = await supabase
-        .from('news')
-        .update({
-          ...updateData,
-          ...(publishedAt ? { published_at: publishedAt } : {}),
-          updated_at: new Date().toISOString()
-        } as any)
+        .from('news_articles')
+        .update(dbUpdate)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      return mapRowToArticle(data as NewsArticleRow);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['news'] });
@@ -157,7 +179,7 @@ export function useDeleteNews() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('news')
+        .from('news_articles')
         .delete()
         .eq('id', id);
 
@@ -171,4 +193,3 @@ export function useDeleteNews() {
     }
   });
 }
-

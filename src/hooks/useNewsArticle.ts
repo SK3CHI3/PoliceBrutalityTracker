@@ -20,8 +20,8 @@ export interface NewsArticle {
   isAiGenerated?: boolean;
 }
 
-// Row shape of the news_articles table (weekly AI digests written by n8n)
-interface WeeklyDigestRow {
+// Row shape of the news_articles table
+interface NewsArticleRow {
   id: string;
   title: string;
   summary: string | null;
@@ -33,83 +33,58 @@ interface WeeklyDigestRow {
   updated_at: string;
 }
 
-function mapDigestToArticle(digest: WeeklyDigestRow): NewsArticle {
+function mapRowToArticle(row: NewsArticleRow): NewsArticle {
   return {
-    id: digest.id,
-    title: digest.title,
-    content: digest.body,
-    excerpt: digest.summary || undefined,
-    author: 'AI Newsroom',
+    id: row.id,
+    title: row.title,
+    content: row.body,
+    excerpt: row.summary || undefined,
+    author: (row.ai_generated ?? false) ? 'AI Newsroom' : 'PoliceBrutalityTracker',
     status: 'published',
-    category: digest.category || 'Weekly Digest',
-    tags: ['weekly-digest', 'ai-generated'],
-    published_at: digest.published_at || undefined,
-    created_at: digest.created_at,
-    updated_at: digest.updated_at,
-    isAiGenerated: digest.ai_generated ?? true,
+    category: row.category || 'News',
+    tags: (row.ai_generated ?? false) ? ['ai-generated'] : [],
+    published_at: row.published_at || undefined,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    isAiGenerated: row.ai_generated ?? false,
   };
 }
 
-// Digests live in news_articles; a missing/failed table must not break the News page
-async function fetchPublishedDigests(): Promise<NewsArticle[]> {
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select('*')
-    .eq('published', true)
-    .order('published_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching weekly digests:', error);
-    return [];
-  }
-  return ((data as WeeklyDigestRow[]) || []).map(mapDigestToArticle);
-}
-
-// Get news article by slug (falls back to digest id lookup)
+// Get news article by id
 export function useNewsArticleBySlug(slug: string) {
   return useQuery({
     queryKey: ['newsArticle', slug],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('news')
+      const { data, error } = await supabase
+        .from('news_articles')
         .select('*')
-        .eq('slug', slug)
-        .eq('status', 'published')
+        .eq('id', slug)
+        .eq('published', true)
         .maybeSingle();
 
-      if (data) return data as NewsArticle;
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error('Article not found');
 
-      // Weekly digests are linked by their id
-      const digests = await fetchPublishedDigests();
-      const digest = digests.find((d) => d.id === slug);
-      if (!digest) throw new Error('Article not found');
-      return digest;
+      return mapRowToArticle(data as NewsArticleRow);
     },
     enabled: !!slug,
   });
 }
 
-// Get all published news articles (editorial + weekly AI digests)
+// Get all published news articles
 export function useAllPublishedNews() {
   return useQuery({
     queryKey: ['allPublishedNews'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('news')
+        .from('news_articles')
         .select('*')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false });
+        .eq('published', true)
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
-
-      const digests = await fetchPublishedDigests();
-      const merged = [...(data as NewsArticle[]), ...digests];
-      merged.sort(
-        (a, b) =>
-          new Date(b.published_at || b.created_at).getTime() -
-          new Date(a.published_at || a.created_at).getTime()
-      );
-      return merged;
-    }
+      if (error) throw new Error(error.message);
+      return ((data as NewsArticleRow[]) || []).map(mapRowToArticle);
+    },
+    staleTime: 0, // Always refetch to get latest articles
   });
 }

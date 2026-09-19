@@ -11,8 +11,8 @@ interface SEOHeadProps {
 }
 
 const SEOHead = ({
-  title = "PoliceBrutalityTracker - Justice through visibility | Police Brutality Tracking Kenya",
-  description = "Interactive platform mapping incidents of police brutality across Kenya. Track, report, and visualize cases of police misconduct. Justice through visibility and transparency.",
+  title = "PoliceBrutalityTracker - Police incident data from Kenya | Centralized and mapped",
+  description = "Interactive platform visualizing police incident data from Kenya. Aggregated from human rights organizations, media reports, and citizen submissions. Public data, organized and visualized.",
   keywords = "police brutality, Kenya, justice, transparency, human rights, police misconduct, accountability, tracking, mapping, incidents, cases",
   image = "https://policebrutalitytracker.co.ke/og-image.svg",
   url = "https://policebrutalitytracker.co.ke",

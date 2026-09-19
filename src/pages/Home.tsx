@@ -9,7 +9,6 @@ import NewsDetailModal from '@/components/NewsDetailModal';
 import SEOHead from '@/components/SEOHead';
 import StructuredData from '@/components/StructuredData';
 import HeroSection from '@/components/home/HeroSection';
-import NamesTicker from '@/components/home/NamesTicker';
 import NewsSection from '@/components/home/NewsSection';
 import MapCTA from '@/components/home/MapCTA';
 import SectionHeading from '@/components/home/SectionHeading';
@@ -50,8 +49,8 @@ const Home = () => {
   const handleEnterApp = () => navigate('/map');
 
   const handleNewsClick = (article: any) => {
-    if (article.slug) {
-      navigate(`/news/${article.slug}`);
+    if (article.id) {
+      navigate(`/news/${article.id}`);
     } else if (article.url && article.url !== '#') {
       window.open(article.url, '_blank');
     } else {
@@ -87,9 +86,9 @@ const Home = () => {
   return (
     <>
       <SEOHead
-        title="PoliceBrutalityTracker - Justice through visibility | Police Brutality Tracking Kenya"
-        description="Interactive platform mapping incidents of police brutality across Kenya. Track, report, and visualize cases of police misconduct. Justice through visibility and transparency."
-        keywords="police brutality, Kenya, justice, transparency, human rights, police misconduct, accountability, tracking, mapping, incidents, cases, interactive map"
+        title="PoliceBrutalityTracker - Police incident data from Kenya | Centralized and mapped"
+        description="Interactive platform visualizing police incident data from Kenya. Aggregated from human rights organizations, media reports, and citizen submissions. Public data, organized and visualized."
+        keywords="police brutality, Kenya, incident data, police misconduct, human rights, tracking, mapping, incidents, cases, interactive map"
         url="https://policebrutalitytracker.co.ke"
       />
       <StructuredData cases={(cases as any) || []} pageType="home" />
@@ -105,7 +104,7 @@ const Home = () => {
                 </div>
                 <div>
                   <h1 className="text-lg sm:text-xl font-bold tracking-tight">PoliceBrutalityTracker</h1>
-                  <p className="text-xs text-gray-400 hidden sm:block">Justice through visibility</p>
+                  <p className="text-xs text-gray-400 hidden sm:block">Public data, visualized</p>
                 </div>
               </div>
 
@@ -127,10 +126,7 @@ const Home = () => {
         </nav>
 
         {/* Hero */}
-        <HeroSection onScrollToData={() => scrollToSection('data')} />
-
-        {/* Memorial names ticker */}
-        <NamesTicker cases={cases} isLoading={isLoading} />
+        <HeroSection onScrollToData={() => scrollToSection('data')} cases={cases} isLoading={isLoading} />
 
         {/* Data modules: county, trend, type charts */}
         <Suspense fallback={<DataModulesFallback />}>
@@ -148,17 +144,18 @@ const Home = () => {
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
             <div>
               <SectionHeading
-                kicker="Our mission"
-                title="Transparency is the first step to accountability."
+                kicker="About this project"
+                title="Centralizing scattered police incident data."
               />
               <p className="text-gray-300 leading-relaxed mb-6">
-                Police brutality cases in Kenya often go undocumented or unreported, making it difficult to
-                understand patterns and hold authorities accountable. This platform bridges that gap —
-                a comprehensive, transparent record of incidents across all 47 counties.
+                Police brutality cases in Kenya are reported across multiple sources — human rights organizations,
+                media outlets, court records, and citizen submissions. This project aggregates that scattered data
+                into one place, making it easier to see patterns and understand the scale of the issue.
               </p>
               <p className="text-gray-300 leading-relaxed">
-                Every pin on the map represents a human story. By visualizing these incidents, we help
-                communities, activists, journalists, and policymakers make informed decisions.
+                All case records are sourced from public information. We don't claim ownership of the data or sell
+                it — we just organize and visualize it to make it more accessible and easier to navigate across
+                all 47 counties.
               </p>
             </div>
 
@@ -205,7 +202,7 @@ const Home = () => {
                   </div>
                   <span className="text-xl font-bold">PoliceBrutalityTracker</span>
                 </div>
-                <p className="text-gray-400 text-sm">Justice through visibility</p>
+                <p className="text-gray-400 text-sm">Public data, visualized</p>
               </div>
 
               <div className="space-y-4">
@@ -252,10 +249,10 @@ const Home = () => {
             <div className="pt-8 border-t border-white/10">
               <div className="flex flex-col md:flex-row items-center justify-between">
                 <p className="text-gray-400 text-sm text-center md:text-left mb-4 md:mb-0">
-                  © {new Date().getFullYear()} PoliceBrutalityTracker. Building a safer Kenya through transparency and accountability.
+                  © {new Date().getFullYear()} PoliceBrutalityTracker. Public data, organized and visualized.
                 </p>
                 <div className="flex items-center space-x-6">
-                  <span className="text-gray-400 text-sm">Together for justice</span>
+                  <span className="text-gray-400 text-sm">Data from public sources</span>
                   <button
                     onClick={handleLiveIndicatorClick}
                     className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer"
