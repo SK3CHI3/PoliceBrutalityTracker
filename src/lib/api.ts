@@ -43,6 +43,7 @@ export async function fetchCases(): Promise<Case[]> {
       .from('cases')
       .select('*')
       .order('incident_date', { ascending: false })
+      .limit(5000)
 
     if (casesError) {
       console.error('Error fetching cases:', casesError)
