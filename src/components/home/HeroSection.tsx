@@ -48,12 +48,10 @@ const HeroSection = ({ onScrollToData, cases, isLoading }: HeroSectionProps) => 
 
         {/* Headline */}
         <h1
-          className="fade-up text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 leading-[1.05] mb-10"
+          className="fade-up text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-[1.1] mb-10"
           style={{ animationDelay: '0.1s' }}
         >
-          Police incident data from Kenya,
-          <br />
-          <span className="text-red-600">centralized and mapped.</span>
+          We track every documented police brutality incident in Kenya — aggregating data from multiple sources into one searchable, visual database.
         </h1>
 
         {/* Pill navigation — MPV style */}
