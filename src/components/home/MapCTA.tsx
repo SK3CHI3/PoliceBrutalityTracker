@@ -46,9 +46,9 @@ const MapCTA = ({ cases, isLoading }: MapCTAProps) => {
     return {
       total: all.length,
       deaths: all.filter((c) => c.type === 'death').length,
-      counties: casesByCounty.size,
+      enforcedDisappearances: all.filter((c) => c.type === 'enforced_disappearance').length,
     };
-  }, [cases, casesByCounty]);
+  }, [cases]);
 
   const typeBreakdown = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -206,8 +206,8 @@ const MapCTA = ({ cases, isLoading }: MapCTAProps) => {
                     <div className="text-xs text-slate-400 mt-1">Deaths</div>
                   </div>
                   <div>
-                    <div className="text-3xl font-black text-slate-900">{nationalStats.counties}</div>
-                    <div className="text-xs text-slate-400 mt-1">Counties affected</div>
+                    <div className="text-3xl font-black text-slate-900">{nationalStats.enforcedDisappearances}</div>
+                    <div className="text-xs text-slate-400 mt-1">Enforced disappearances</div>
                   </div>
                 </div>
               </>
