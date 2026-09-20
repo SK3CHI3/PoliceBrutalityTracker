@@ -10,7 +10,7 @@ export interface Case {
   id: string;
   victimName: string;
   age?: number;
-  date: string;
+  date: string | null;
   location: string;
   county: string;
   coordinates: [number, number];

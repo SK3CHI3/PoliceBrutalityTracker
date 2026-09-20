@@ -76,7 +76,10 @@ const AdminDashboard = () => {
   const totalCases = cases?.length || 0;
   const totalSubmissions = pendingSubmissions.data?.length || 0;
   const recentCases = cases?.filter(c => {
-    const caseDate = new Date(c.created_at || c.date);
+    const dateStr = c.created_at || c.date;
+    if (!dateStr) return false;
+    const caseDate = new Date(dateStr);
+    if (isNaN(caseDate.getTime())) return false;
     const dayAgo = new Date();
     dayAgo.setDate(dayAgo.getDate() - 1);
     return caseDate >= dayAgo;
@@ -91,7 +94,9 @@ const AdminDashboard = () => {
   const totalPending = totalPendingSubmissions;
 
   const thisMonthCases = cases?.filter(c => {
+    if (!c.date) return false;
     const caseDate = new Date(c.date);
+    if (isNaN(caseDate.getTime())) return false;
     const now = new Date();
     return caseDate.getMonth() === now.getMonth() && caseDate.getFullYear() === now.getFullYear();
   }).length || 0;

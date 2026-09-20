@@ -65,14 +65,19 @@ export const computeHomeStats = (cases: Case[] | undefined): HomeStats => {
   let latestUpdate: Date | null = null;
 
   for (const c of cases) {
-    const d = new Date(c.date);
-    if (!isNaN(d.getTime())) {
-      const year = d.getFullYear();
-      if (earliestYear === null || year < earliestYear) earliestYear = year;
+    if (c.date) {
+      const d = new Date(c.date);
+      if (!isNaN(d.getTime())) {
+        const year = d.getFullYear();
+        if (earliestYear === null || year < earliestYear) earliestYear = year;
+      }
     }
-    const updated = new Date(c.updated_at || c.created_at || c.date);
-    if (!isNaN(updated.getTime()) && (!latestUpdate || updated > latestUpdate)) {
-      latestUpdate = updated;
+    const updatedStr = c.updated_at || c.created_at || c.date;
+    if (updatedStr) {
+      const updated = new Date(updatedStr);
+      if (!isNaN(updated.getTime()) && (!latestUpdate || updated > latestUpdate)) {
+        latestUpdate = updated;
+      }
     }
   }
 
