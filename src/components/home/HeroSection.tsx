@@ -36,49 +36,51 @@ const HeroSection = ({ onScrollToData, cases, isLoading }: HeroSectionProps) => 
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(220,38,38,0.07),transparent_65%)]" />
       </div>
 
-      <div className="relative max-w-4xl mx-auto w-full text-center">
-        {/* Kicker */}
-        <div className="fade-up inline-flex items-center gap-3 mb-8">
-          <span className="h-px w-8 bg-red-400/70" />
-          <span className="text-xs font-bold uppercase tracking-[0.3em] text-red-600">
-            An independent data project — Kenya
-          </span>
-          <span className="h-px w-8 bg-red-400/70" />
-        </div>
+      <div className="relative max-w-6xl mx-auto w-full h-full flex flex-col justify-end pb-24">
+        <div className="text-left">
+          {/* Kicker */}
+          <div className="fade-up inline-flex items-center gap-3 mb-6">
+            <span className="h-px w-8 bg-red-400/70" />
+            <span className="text-xs font-bold uppercase tracking-[0.3em] text-red-600">
+              An independent data project — Kenya
+            </span>
+            <span className="h-px w-8 bg-red-400/70" />
+          </div>
 
-        {/* Headline */}
-        <h1
-          className="fade-up text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-[1.1] mb-10"
-          style={{ animationDelay: '0.1s' }}
-        >
-          We track every documented police brutality incident in Kenya — aggregating data from multiple sources into one searchable, visual database.
-        </h1>
-
-        {/* Pill navigation — MPV style */}
-        <div
-          className="fade-up flex flex-wrap items-center justify-center gap-3 sm:gap-4"
-          style={{ animationDelay: '0.3s' }}
-        >
-          <Button
-            onClick={() => navigate('/map')}
-            size="lg"
-            className="rounded-full bg-red-600 hover:bg-red-700 text-white px-7 font-semibold shadow-lg shadow-red-200 gap-2"
+          {/* Headline */}
+          <h1
+            className="fade-up text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-[1.1] mb-10 max-w-4xl"
+            style={{ animationDelay: '0.1s' }}
           >
-            <MapIcon className="w-4 h-4" />
-            Explore the map
-          </Button>
-          <button onClick={onScrollToData} className={pillClass}>
-            <Database className="w-4 h-4 text-red-500" />
-            See the data
-          </button>
-          <button onClick={() => navigate('/cases')} className={pillClass}>
-            <FolderOpen className="w-4 h-4 text-red-500" />
-            Browse cases
-          </button>
-          <button onClick={() => navigate('/news')} className={pillClass}>
-            <FileText className="w-4 h-4 text-red-500" />
-            Read news
-          </button>
+            We track every documented police brutality incident in Kenya — aggregating data from multiple sources into one searchable, visual database.
+          </h1>
+
+          {/* Pill navigation — MPV style */}
+          <div
+            className="fade-up flex flex-wrap items-center gap-3 sm:gap-4"
+            style={{ animationDelay: '0.3s' }}
+          >
+            <Button
+              onClick={() => navigate('/map')}
+              size="lg"
+              className="rounded-full bg-red-600 hover:bg-red-700 text-white px-7 font-semibold shadow-lg shadow-red-200 gap-2"
+            >
+              <MapIcon className="w-4 h-4" />
+              Explore the map
+            </Button>
+            <button onClick={onScrollToData} className={pillClass}>
+              <Database className="w-4 h-4 text-red-500" />
+              See the data
+            </button>
+            <button onClick={() => navigate('/cases')} className={pillClass}>
+              <FolderOpen className="w-4 h-4 text-red-500" />
+              Browse cases
+            </button>
+            <button onClick={() => navigate('/news')} className={pillClass}>
+              <FileText className="w-4 h-4 text-red-500" />
+              Read news
+            </button>
+          </div>
         </div>
       </div>
 
