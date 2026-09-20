@@ -90,6 +90,12 @@ const CaseModal = ({ case: caseData, onClose }: CaseModalProps) => {
           label: 'Abduction',
           icon: AlertTriangle
         };
+      case 'enforced_disappearance':
+        return {
+          color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+          label: 'Enforced Disappearance',
+          icon: AlertTriangle
+        };
       case 'other':
         return {
           color: 'bg-gray-500/20 text-gray-300 border-gray-500/30',

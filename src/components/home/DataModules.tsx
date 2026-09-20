@@ -264,7 +264,8 @@ const MpvCard = ({ kicker, summary, onDownload, children, cardRef }: MpvCardProp
   </div>
 );
 
-const parseDate = (s: string) => {
+const parseDate = (s: string | null) => {
+  if (!s) return new Date(NaN); // Return invalid date for null
   const [y, m, d] = s.split('-').map(Number);
   return new Date(y, m - 1, d);
 };

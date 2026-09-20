@@ -20,7 +20,7 @@ export interface DatabaseCase {
   county: string
   latitude: number
   longitude: number
-  case_type: 'death' | 'assault' | 'harassment' | 'unlawful_arrest' | 'abduction' | 'other'
+  case_type: 'death' | 'assault' | 'harassment' | 'unlawful_arrest' | 'abduction' | 'enforced_disappearance' | 'other'
   description: string
   status: 'confirmed' | 'unconfirmed'
   source?: string
@@ -64,7 +64,7 @@ export interface DatabaseCaseSubmission {
   county?: string | null
   latitude?: number
   longitude?: number
-  case_type?: 'death' | 'assault' | 'harassment' | 'unlawful_arrest' | 'abduction' | 'other' | null
+  case_type?: 'death' | 'assault' | 'harassment' | 'unlawful_arrest' | 'abduction' | 'enforced_disappearance' | 'other' | null
   description: string
   // Scraper-only fields (populated by the n8n weekly scraper)
   title?: string | null

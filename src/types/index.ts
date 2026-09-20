@@ -14,7 +14,7 @@ export interface Case {
   location: string;
   county: string;
   coordinates: [number, number];
-  type: 'death' | 'assault' | 'harassment' | 'unlawful_arrest' | 'abduction' | 'other';
+  type: 'death' | 'assault' | 'harassment' | 'unlawful_arrest' | 'abduction' | 'enforced_disappearance' | 'other';
   description: string;
   status: 'confirmed' | 'unconfirmed';
   photos?: string[];
