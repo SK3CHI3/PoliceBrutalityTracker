@@ -11,12 +11,6 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
 
-// Skip prerendering if SKIP_PRERENDER env var is set
-if (process.env.SKIP_PRERENDER === 'true') {
-  console.log('⏭️  Skipping prerendering (SKIP_PRERENDER=true)');
-  process.exit(0);
-}
-
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
@@ -31,18 +25,20 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function generateSnapConfig() {
   try {
-    // Fetch all published cases
+    // Fetch only the 50 most recent cases (by incident_date) for prerendering
+    // This keeps builds fast while still getting SEO benefit for recent cases
     const { data: cases, error } = await supabase
       .from('cases')
       .select('id')
-      .order('incident_date', { ascending: false });
+      .order('incident_date', { ascending: false })
+      .limit(50);
 
     if (error) {
       console.error('❌ Error fetching cases:', error.message);
       process.exit(0);
     }
 
-    // Generate URLs for all case pages
+    // Generate URLs for recent case pages only
     const caseUrls = cases.map(c => `/cases/${c.id}`);
     
     // Static pages
@@ -55,7 +51,7 @@ async function generateSnapConfig() {
 
     const allPages = [...staticPages, ...caseUrls];
 
-    console.log(`✅ Found ${cases.length} cases`);
+    console.log(`✅ Found ${cases.length} recent cases (limit 50)`);
     console.log(`📄 Total pages to prerender: ${allPages.length}`);
 
     // Read package.json
@@ -68,8 +64,8 @@ async function generateSnapConfig() {
     // Write back to package.json
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
 
-    console.log('✅ Updated package.json with all case URLs');
-    console.log('🚀 react-snap will now prerender all case pages!');
+    console.log('✅ Updated package.json with recent case URLs');
+    console.log('🚀 react-snap will now prerender recent cases!');
 
   } catch (error) {
     console.error('❌ Error:', error.message);
