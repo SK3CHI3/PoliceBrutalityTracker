@@ -45,21 +45,15 @@ export const formatFullDate = (dateString: string | null | undefined): string =>
 export interface HomeStats {
   totalCases: number;
   deathsCount: number;
-  countiesCount: number;
+  enforcedDisappearancesCount: number;
   earliestYear: number | null;
   latestUpdate: Date | null;
 }
 
 export const computeHomeStats = (cases: Case[] | undefined): HomeStats => {
   if (!cases || cases.length === 0) {
-    return { totalCases: 0, deathsCount: 0, countiesCount: 0, earliestYear: null, latestUpdate: null };
+    return { totalCases: 0, deathsCount: 0, enforcedDisappearancesCount: 0, earliestYear: null, latestUpdate: null };
   }
-
-  const counties = new Set(
-    cases
-      .map((c) => c.county)
-      .filter(Boolean)
-  );
 
   let earliestYear: number | null = null;
   let latestUpdate: Date | null = null;
@@ -84,7 +78,7 @@ export const computeHomeStats = (cases: Case[] | undefined): HomeStats => {
   return {
     totalCases: cases.length,
     deathsCount: cases.filter((c) => c.type === 'death').length,
-    countiesCount: counties.size,
+    enforcedDisappearancesCount: cases.filter((c) => c.type === 'enforced_disappearance').length,
     earliestYear,
     latestUpdate,
   };

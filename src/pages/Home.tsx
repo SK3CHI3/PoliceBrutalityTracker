@@ -226,7 +226,7 @@ const Home = () => {
                   <div className="text-gray-400 text-sm">
                     Total cases: {isLoading ? '…' : error ? '—' : stats.totalCases}
                   </div>
-                  <div className="text-gray-400 text-sm">Counties: {isLoading ? '…' : error ? '—' : stats.countiesCount}</div>
+                  <div className="text-gray-400 text-sm">Enforced disappearances: {isLoading ? '…' : error ? '—' : stats.enforcedDisappearancesCount}</div>
                   <div className="text-gray-400 text-sm">
                     Last updated:{' '}
                     {stats.latestUpdate
