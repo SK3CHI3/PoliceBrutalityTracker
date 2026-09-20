@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  SKIP_PRERENDER = "true"
 
 # SPA redirect - must be last to avoid catching assets
 [[redirects]]

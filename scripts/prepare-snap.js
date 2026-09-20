@@ -11,6 +11,12 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
 
+// Skip prerendering if SKIP_PRERENDER env var is set
+if (process.env.SKIP_PRERENDER === 'true') {
+  console.log('⏭️  Skipping prerendering (SKIP_PRERENDER=true)');
+  process.exit(0);
+}
+
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
