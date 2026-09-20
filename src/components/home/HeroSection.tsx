@@ -36,7 +36,7 @@ const HeroSection = ({ onScrollToData, cases, isLoading }: HeroSectionProps) => 
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(220,38,38,0.07),transparent_65%)]" />
       </div>
 
-      <div className="relative max-w-6xl mx-auto w-full h-full flex flex-col justify-end pb-24">
+      <div className="relative max-w-6xl mx-auto w-full h-full flex flex-col justify-end pb-40">
         <div className="text-left">
           {/* Kicker */}
           <div className="fade-up inline-flex items-center gap-3 mb-6">
