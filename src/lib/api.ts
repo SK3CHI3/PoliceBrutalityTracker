@@ -38,20 +38,39 @@ export function transformDatabaseCase(
 // Fetch all cases with their photos and videos
 export async function fetchCases(): Promise<Case[]> {
   try {
-    // Fetch cases
-    const { data: cases, error: casesError } = await supabase
-      .from('cases')
-      .select('*')
-      .order('incident_date', { ascending: false })
-      .limit(5000)
+    // Fetch all cases using pagination to bypass Supabase's max rows limit
+    const allCases: DatabaseCase[] = [];
+    let from = 0;
+    const batchSize = 1000;
+    let hasMore = true;
 
-    if (casesError) {
-      console.error('Error fetching cases:', casesError)
-      throw casesError
+    while (hasMore) {
+      const to = from + batchSize - 1;
+      const { data: casesBatch, error: casesError } = await supabase
+        .from('cases')
+        .select('*')
+        .order('incident_date', { ascending: false })
+        .range(from, to);
+
+      if (casesError) {
+        console.error('Error fetching cases:', casesError);
+        throw casesError;
+      }
+
+      if (casesBatch && casesBatch.length > 0) {
+        allCases.push(...casesBatch);
+        from += batchSize;
+        // If we got fewer than batchSize, we've reached the end
+        if (casesBatch.length < batchSize) {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
+      }
     }
 
-    if (!cases || cases.length === 0) {
-      return []
+    if (!allCases || allCases.length === 0) {
+      return [];
     }
 
     // Fetch photos for all cases
@@ -73,7 +92,7 @@ export async function fetchCases(): Promise<Case[]> {
     }
 
     // Transform and combine data
-    return cases.map(dbCase => {
+    return allCases.map(dbCase => {
       const casePhotos = photos?.filter(p => p.case_id === dbCase.id) || []
       const caseVideos = videos?.filter(v => v.case_id === dbCase.id) || []
       return transformDatabaseCase(dbCase, casePhotos, caseVideos)
