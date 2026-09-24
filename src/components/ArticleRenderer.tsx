@@ -4,7 +4,7 @@ interface ArticleRendererProps {
 
 const ArticleRenderer = ({ content }: ArticleRendererProps) => {
   // Split content into paragraphs by double newlines
-  const paragraphs = content.split('\n\n').filter(p => p.trim());
+  const paragraphs = (content || '').split('\n\n').filter(p => p.trim());
 
   return (
     <div className="article-body">

@@ -155,7 +155,7 @@ const NewsDetailModal = ({ isOpen, onClose, article }: NewsDetailModalProps) => 
             {/* Content - Beautiful Typography */}
             <div className="prose prose-invert prose-lg max-w-none">
               <div className="text-gray-300 leading-[1.8] text-base md:text-lg whitespace-pre-wrap space-y-4">
-                {article.content.split('\n\n').map((paragraph, idx) => (
+                {(article.content || '').split('\n\n').map((paragraph, idx) => (
                   <p key={idx} className="mb-4 first:mt-0">
                     {paragraph}
                   </p>

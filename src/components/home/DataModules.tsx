@@ -282,7 +282,7 @@ const DataModules = ({ cases, isLoading }: DataModulesProps) => {
 
   const deaths = useMemo(() => {
     return (cases || [])
-      .filter((c) => c.type === 'death')
+      .filter((c) => c.type === 'death' && c.date != null)
       .map((c) => ({ date: parseDate(c.date), county: c.county }))
       .filter((d) => !isNaN(d.date.getTime()));
   }, [cases]);
