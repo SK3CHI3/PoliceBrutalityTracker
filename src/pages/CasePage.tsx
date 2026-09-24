@@ -137,7 +137,7 @@ const CasePage = () => {
     <>
       <SEOHead
         title={`${caseData.victimName} - ${caseData.county} | PoliceBrutalityTracker`}
-        description={`Police brutality case in ${caseData.county}, Kenya. ${caseData.description.substring(0, 150)}...`}
+        description={`Police brutality case in ${caseData.county}, Kenya. ${(caseData.description || '').substring(0, 150)}...`}
         keywords={`police brutality, ${caseData.county}, ${caseData.victimName}, Kenya, human rights, ${caseData.type}`}
         url={`https://policebrutalitytracker.co.ke/case/${caseData.id}`}
       />

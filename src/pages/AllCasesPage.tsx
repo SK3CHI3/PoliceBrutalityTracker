@@ -175,7 +175,7 @@ const AllNewsPage = () => {
                       </h3>
                       
                       <p className="text-gray-300 text-sm line-clamp-3 mb-4 leading-relaxed">
-                        {article.excerpt || article.content.substring(0, 150) + '...'}
+                        {article.excerpt || (article.content ? article.content.substring(0, 150) + '...' : '')}
                       </p>
                       
                       <div className="flex items-center justify-between text-xs">
